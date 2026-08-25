@@ -215,6 +215,7 @@
 
   <nav class="tabs">
     <button data-tab="inicio" class="active">Inicio</button>
+    <button data-tab="produccion">Producción</button>
     <button data-tab="clientes">Clientes &amp; Sedes</button>
     <button data-tab="contactos">Contactos</button>
     <button data-tab="productos">Productos</button>
@@ -286,6 +287,92 @@
         <button class="primary" onclick="crearPedido()">+ Agregar pedido</button>
       </div>
       <p style="font-size:12px; color:var(--texto-suave);">Si un cliente no aparece con contactos o sedes en las listas, primero agrégaselos en la pestaña "Clientes &amp; Sedes" / "Contactos".</p>
+    </section>
+
+    <!-- PRODUCCIÓN -->
+    <section id="panel-produccion" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Producción y entregas</h2>
+          <p>Lo horneado, lo entregado y el inventario pendiente por tipo de pan.</p>
+        </div>
+      </div>
+
+      <div class="row-form" style="align-items:center;">
+        <button class="ghost" id="btn-prod-rango-semana">Esta semana</button>
+        <button class="ghost" id="btn-prod-rango-custom">Elegir fechas</button>
+        <span id="prod-rango-custom-inputs" style="display:none; gap:8px; align-items:center;">
+          <input type="date" class="mini" id="prod-rango-desde" style="width:150px">
+          <span style="color:var(--texto-suave); font-size:13px;">hasta</span>
+          <input type="date" class="mini" id="prod-rango-hasta" style="width:150px">
+          <button class="primary" id="btn-prod-aplicar-rango">Aplicar</button>
+        </span>
+        <span id="prod-rango-label" style="margin-left:auto; font-size:13px; color:var(--texto-suave);"></span>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
+        <div>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Producción por tipo de pan (período)</h3>
+          <table>
+            <thead><tr><th>Tipo de pan</th><th>Cantidad producida</th></tr></thead>
+            <tbody id="tbody-produccion-tipo"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Entregas por tipo de pan y destino (período)</h3>
+          <table>
+            <thead><tr><th>Tipo de pan</th><th>Destino</th><th>Cantidad</th></tr></thead>
+            <tbody id="tbody-entregas-detalle"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Inventario pendiente (histórico total — no depende del rango de fechas de arriba)</h3>
+      <table style="margin-bottom:28px;">
+        <thead><tr><th>Tipo de pan</th><th>Producido total</th><th>Entregado total</th><th>Pendiente</th></tr></thead>
+        <tbody id="tbody-inventario"></tbody>
+      </table>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Historial día por día de un tipo de pan (histórico completo)</h3>
+      <div class="row-form">
+        <select class="mini" id="hist-formula" style="min-width:220px;"><option value="">Elige un tipo de pan…</option></select>
+      </div>
+      <div id="hist-tabla-wrap" style="display:none;">
+        <h3 id="hist-titulo" style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;"></h3>
+        <table style="margin-bottom:28px;">
+          <thead><tr><th>Fecha</th><th>Producido ese día</th><th>Entregado ese día</th><th>Saldo acumulado</th></tr></thead>
+          <tbody id="tbody-historial"></tbody>
+        </table>
+      </div>
+
+      <div class="panel-head" style="margin-top:8px;">
+        <div>
+          <h2 style="font-size:18px;">+ Registrar producción</h2>
+        </div>
+      </div>
+      <div class="row-form" style="flex-wrap:wrap;">
+        <select class="mini" id="lp-formula" style="min-width:180px;"><option value="">Tipo de pan…</option></select>
+        <input type="number" class="mini" id="lp-cantidad" placeholder="Cantidad" style="width:110px;">
+        <input type="date" class="mini" id="lp-fecha" style="width:150px;">
+        <input type="text" class="mini" id="lp-nota" placeholder="Nota (opcional)" style="min-width:160px; flex:1;">
+        <button class="primary" onclick="crearLoteProduccion()">+ Registrar producción</button>
+      </div>
+
+      <div class="panel-head" style="margin-top:20px;">
+        <div>
+          <h2 style="font-size:18px;">+ Registrar entrega</h2>
+        </div>
+      </div>
+      <div class="row-form" style="flex-wrap:wrap;">
+        <select class="mini" id="en-formula" style="min-width:180px;"><option value="">Tipo de pan…</option></select>
+        <select class="mini" id="en-cliente" style="min-width:160px;"><option value="">Cliente…</option></select>
+        <input type="text" class="mini" id="en-destino-libre" placeholder="o destino libre (ej. Mostrador Pizzamos)" style="min-width:200px; flex:1;">
+        <input type="number" class="mini" id="en-cantidad" placeholder="Cantidad" style="width:110px;">
+        <input type="date" class="mini" id="en-fecha" style="width:150px;">
+        <input type="text" class="mini" id="en-nota" placeholder="Nota (opcional)" style="min-width:160px; flex:1;">
+        <button class="primary" onclick="crearEntrega()">+ Registrar entrega</button>
+      </div>
+      <p style="font-size:12px; color:var(--texto-suave);">Si eliges un cliente, se ignora el destino libre. Usa el destino libre solo para casos que no son un cliente formal (ej. Mostrador Pizzamos).</p>
     </section>
 
     <!-- CLIENTES -->
@@ -412,14 +499,24 @@
   }
 
   let CLIENTES = [], SEDES = [], CONTACTOS = [], CONTACTO_SEDE = [], PRODUCTOS = [], PEDIDOS = [];
+  let FORMULAS = [], LOTES_PRODUCIDOS = [], ENTREGAS = [];
+  let CLIENTE_PRODUCTO = [];
   let rangoDesde, rangoHasta;
+  let rangoProdDesde, rangoProdHasta;
 
   async function initApp() {
     document.getElementById('conn-status').textContent = 'cargando datos…';
     setRangoSemanaActual();
-    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos()]);
-    await cargarPedidos();
+    setRangoProdSemanaActual();
+    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarFormulas(), cargarClienteProducto()]);
+    await Promise.all([cargarPedidos(), cargarProduccion()]);
     document.getElementById('conn-status').textContent = 'conectado';
+  }
+
+  async function cargarClienteProducto() {
+    const { data, error } = await sb.from('cliente_producto').select('*');
+    if (error) { toast('Error cargando productos por cliente: ' + error.message, true); return; }
+    CLIENTE_PRODUCTO = data || [];
   }
 
   // ---------- DASHBOARD / INICIO ----------
@@ -522,18 +619,22 @@
   function poblarSelectPedidoForm() {
     const selCliente = document.getElementById('np-cliente');
     selCliente.innerHTML = '<option value="">Cliente…</option>' + CLIENTES.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
-    const selProducto = document.getElementById('np-producto');
-    selProducto.innerHTML = '<option value="">Producto…</option>' + PRODUCTOS.filter(p => p.activo !== false).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
   }
 
   document.getElementById('np-cliente').addEventListener('change', (e) => {
     const clienteId = parseInt(e.target.value, 10);
     const selContacto = document.getElementById('np-contacto');
     const selSede = document.getElementById('np-sede');
+    const selProducto = document.getElementById('np-producto');
     const contactosCliente = CONTACTOS.filter(k => k.cliente_id === clienteId && k.activo !== false);
     const sedesCliente = SEDES.filter(s => s.cliente_id === clienteId);
+    const productoIdsCliente = CLIENTE_PRODUCTO.filter(cp => cp.cliente_id === clienteId && cp.activo !== false).map(cp => cp.producto_id);
+    const productosCliente = PRODUCTOS.filter(p => productoIdsCliente.includes(p.id) && p.activo !== false);
     selContacto.innerHTML = '<option value="">Contacto…</option>' + contactosCliente.map(k => `<option value="${k.id}">${esc(k.nombre)}</option>`).join('');
     selSede.innerHTML = '<option value="">Sede…</option>' + sedesCliente.map(s => `<option value="${s.id}">${esc(s.nombre)}</option>`).join('');
+    selProducto.innerHTML = productosCliente.length
+      ? '<option value="">Producto…</option>' + productosCliente.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('')
+      : '<option value="">Sin productos asignados a este cliente</option>';
   });
 
   window.crearPedido = async function() {
@@ -556,6 +657,231 @@
     document.getElementById('np-hora').value = '';
     toast('Pedido registrado');
     cargarPedidos();
+  };
+
+  // ---------- PRODUCCIÓN ----------
+  function setRangoProdSemanaActual() {
+    const hoy = new Date();
+    rangoProdDesde = lunesDeSemana(hoy);
+    rangoProdHasta = domingoDeSemana(hoy);
+    actualizarLabelRangoProd();
+  }
+
+  function actualizarLabelRangoProd() {
+    document.getElementById('prod-rango-label').textContent =
+      `${fechaLegible(rangoProdDesde)} — ${fechaLegible(rangoProdHasta)}`;
+  }
+
+  document.getElementById('btn-prod-rango-semana').addEventListener('click', () => {
+    setRangoProdSemanaActual();
+    document.getElementById('prod-rango-custom-inputs').style.display = 'none';
+    cargarProduccion();
+  });
+  document.getElementById('btn-prod-rango-custom').addEventListener('click', () => {
+    document.getElementById('prod-rango-custom-inputs').style.display = 'inline-flex';
+    document.getElementById('prod-rango-desde').value = toISODate(rangoProdDesde);
+    document.getElementById('prod-rango-hasta').value = toISODate(rangoProdHasta);
+  });
+  document.getElementById('btn-prod-aplicar-rango').addEventListener('click', () => {
+    const d = document.getElementById('prod-rango-desde').value;
+    const h = document.getElementById('prod-rango-hasta').value;
+    if (!d || !h) { toast('Selecciona ambas fechas', true); return; }
+    rangoProdDesde = new Date(d + 'T00:00:00');
+    rangoProdHasta = new Date(h + 'T00:00:00');
+    actualizarLabelRangoProd();
+    cargarProduccion();
+  });
+
+  async function cargarFormulas() {
+    const { data, error } = await sb.from('formulas').select('*').order('nombre');
+    if (error) { toast('Error cargando fórmulas: ' + error.message, true); return; }
+    FORMULAS = data || [];
+    poblarSelectsFormula();
+  }
+
+  function poblarSelectsFormula() {
+    const opciones = '<option value="">Tipo de pan…</option>' + FORMULAS.map(f => `<option value="${f.id}">${esc(f.nombre)}</option>`).join('');
+    document.getElementById('lp-formula').innerHTML = opciones;
+    document.getElementById('en-formula').innerHTML = opciones;
+    document.getElementById('hist-formula').innerHTML = '<option value="">Elige un tipo de pan…</option>' + FORMULAS.map(f => `<option value="${f.id}">${esc(f.nombre)}</option>`).join('');
+  }
+
+  function nombreFormula(id) {
+    const f = FORMULAS.find(x => x.id === id);
+    return f ? f.nombre : 'Tipo desconocido';
+  }
+
+  async function cargarProduccion() {
+    await Promise.all([cargarLotesProducidos(), cargarEntregas(), cargarInventario()]);
+  }
+
+  async function cargarLotesProducidos() {
+    const { data, error } = await sb.from('lotes_producidos')
+      .select('*, formulas(nombre)')
+      .gte('fecha', toISODate(rangoProdDesde))
+      .lte('fecha', toISODate(rangoProdHasta))
+      .order('fecha', { ascending: true });
+    if (error) { toast('Error cargando producción: ' + error.message, true); return; }
+    LOTES_PRODUCIDOS = data || [];
+    renderProduccionTipo();
+  }
+
+  function renderProduccionTipo() {
+    const porTipo = {};
+    LOTES_PRODUCIDOS.forEach(l => {
+      const nombre = l.formulas ? l.formulas.nombre : 'Sin tipo';
+      porTipo[nombre] = (porTipo[nombre] || 0) + (l.cantidad_panes || 0);
+    });
+    const tbody = document.getElementById('tbody-produccion-tipo');
+    const entradas = Object.entries(porTipo).sort((a,b) => b[1]-a[1]);
+    tbody.innerHTML = entradas.length
+      ? entradas.map(([nombre, cant]) => `<tr><td>${esc(nombre)}</td><td><strong>${cant.toLocaleString('es-CO')}</strong></td></tr>`).join('')
+      : '<tr><td colspan="2" class="empty">Sin producción en este período</td></tr>';
+  }
+
+  async function cargarEntregas() {
+    const { data, error } = await sb.from('entregas')
+      .select('*, formulas(nombre), clientes(nombre)')
+      .gte('fecha', toISODate(rangoProdDesde))
+      .lte('fecha', toISODate(rangoProdHasta))
+      .order('fecha', { ascending: true });
+    if (error) { toast('Error cargando entregas: ' + error.message, true); return; }
+    ENTREGAS = data || [];
+    renderEntregasDetalle();
+  }
+
+  function renderEntregasDetalle() {
+    const porTipoDestino = {};
+    ENTREGAS.forEach(e => {
+      const tipo = e.formulas ? e.formulas.nombre : 'Sin tipo';
+      const destino = e.clientes ? e.clientes.nombre : (e.destino_libre || 'Sin destino');
+      const key = tipo + '|' + destino;
+      if (!porTipoDestino[key]) porTipoDestino[key] = { tipo, destino, cantidad: 0 };
+      porTipoDestino[key].cantidad += (e.cantidad || 0);
+    });
+    const tbody = document.getElementById('tbody-entregas-detalle');
+    const filas = Object.values(porTipoDestino).sort((a,b) => b.cantidad - a.cantidad);
+    tbody.innerHTML = filas.length
+      ? filas.map(f => `<tr><td>${esc(f.tipo)}</td><td>${esc(f.destino)}</td><td><strong>${f.cantidad.toLocaleString('es-CO')}</strong></td></tr>`).join('')
+      : '<tr><td colspan="3" class="empty">Sin entregas en este período</td></tr>';
+  }
+
+  async function cargarInventario() {
+    const [{ data: prodData, error: e1 }, { data: entData, error: e2 }] = await Promise.all([
+      sb.from('lotes_producidos').select('formula_id, cantidad_panes'),
+      sb.from('entregas').select('formula_id, cantidad')
+    ]);
+    if (e1 || e2) { toast('Error cargando inventario: ' + (e1?.message || e2?.message), true); return; }
+
+    const producidoPorFormula = {};
+    (prodData || []).forEach(l => { producidoPorFormula[l.formula_id] = (producidoPorFormula[l.formula_id] || 0) + (l.cantidad_panes || 0); });
+    const entregadoPorFormula = {};
+    (entData || []).forEach(e => { entregadoPorFormula[e.formula_id] = (entregadoPorFormula[e.formula_id] || 0) + (e.cantidad || 0); });
+
+    const formulaIds = new Set([...Object.keys(producidoPorFormula), ...Object.keys(entregadoPorFormula)].map(Number));
+    const filas = [...formulaIds].map(id => {
+      const producido = producidoPorFormula[id] || 0;
+      const entregado = entregadoPorFormula[id] || 0;
+      return { nombre: nombreFormula(id), producido, entregado, pendiente: producido - entregado };
+    }).sort((a,b) => b.pendiente - a.pendiente);
+
+    const tbody = document.getElementById('tbody-inventario');
+    tbody.innerHTML = filas.length
+      ? filas.map(f => `
+          <tr>
+            <td>${esc(f.nombre)}</td>
+            <td>${f.producido.toLocaleString('es-CO')}</td>
+            <td>${f.entregado.toLocaleString('es-CO')}</td>
+            <td><strong style="color:${f.pendiente < 0 ? 'var(--error)' : 'var(--texto)'}">${f.pendiente.toLocaleString('es-CO')}</strong></td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" class="empty">Sin datos de producción o entregas todavía</td></tr>';
+  }
+
+  document.getElementById('hist-formula').addEventListener('change', cargarHistorialFormula);
+
+  async function cargarHistorialFormula() {
+    const formulaId = document.getElementById('hist-formula').value;
+    const wrap = document.getElementById('hist-tabla-wrap');
+    if (!formulaId) { wrap.style.display = 'none'; return; }
+
+    const [{ data: prodData, error: e1 }, { data: entData, error: e2 }] = await Promise.all([
+      sb.from('lotes_producidos').select('fecha, cantidad_panes').eq('formula_id', formulaId),
+      sb.from('entregas').select('fecha, cantidad').eq('formula_id', formulaId)
+    ]);
+    if (e1 || e2) { toast('Error cargando historial: ' + (e1?.message || e2?.message), true); return; }
+
+    const producidoPorFecha = {};
+    (prodData || []).forEach(l => { producidoPorFecha[l.fecha] = (producidoPorFecha[l.fecha] || 0) + (l.cantidad_panes || 0); });
+    const entregadoPorFecha = {};
+    (entData || []).forEach(e => { entregadoPorFecha[e.fecha] = (entregadoPorFecha[e.fecha] || 0) + (e.cantidad || 0); });
+
+    const fechas = [...new Set([...Object.keys(producidoPorFecha), ...Object.keys(entregadoPorFecha)])].sort();
+
+    let saldo = 0;
+    const filas = fechas.map(fecha => {
+      const producido = producidoPorFecha[fecha] || 0;
+      const entregado = entregadoPorFecha[fecha] || 0;
+      saldo += producido - entregado;
+      return { fecha, producido, entregado, saldo };
+    });
+    filas.reverse(); // fecha más reciente arriba
+
+    document.getElementById('hist-titulo').textContent = `Historial de ${nombreFormula(parseInt(formulaId, 10))}`;
+    const tbody = document.getElementById('tbody-historial');
+    tbody.innerHTML = filas.length
+      ? filas.map(f => `
+          <tr>
+            <td>${new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'})}</td>
+            <td>${f.producido ? f.producido.toLocaleString('es-CO') : '—'}</td>
+            <td>${f.entregado ? f.entregado.toLocaleString('es-CO') : '—'}</td>
+            <td><strong style="color:${f.saldo < 0 ? 'var(--error)' : 'var(--texto)'}">${f.saldo.toLocaleString('es-CO')}</strong></td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" class="empty">Sin movimientos registrados para este tipo de pan</td></tr>';
+    wrap.style.display = 'block';
+  }
+
+  window.crearLoteProduccion = async function() {
+    const formulaId = document.getElementById('lp-formula').value;
+    const cantidad = parseInt(document.getElementById('lp-cantidad').value, 10);
+    const fecha = document.getElementById('lp-fecha').value;
+    const nota = document.getElementById('lp-nota').value.trim();
+    if (!formulaId || !cantidad || !fecha) {
+      toast('Completa tipo de pan, cantidad y fecha', true); return;
+    }
+    const { error } = await sb.from('lotes_producidos').insert({
+      formula_id: formulaId, cantidad_panes: cantidad, fecha, nota: nota || null
+    });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('lp-cantidad').value = '';
+    document.getElementById('lp-fecha').value = '';
+    document.getElementById('lp-nota').value = '';
+    toast('Producción registrada');
+    cargarProduccion();
+  };
+
+  window.crearEntrega = async function() {
+    const formulaId = document.getElementById('en-formula').value;
+    const clienteId = document.getElementById('en-cliente').value;
+    const destinoLibre = document.getElementById('en-destino-libre').value.trim();
+    const cantidad = parseInt(document.getElementById('en-cantidad').value, 10);
+    const fecha = document.getElementById('en-fecha').value;
+    const nota = document.getElementById('en-nota').value.trim();
+    if (!formulaId || !cantidad || !fecha || (!clienteId && !destinoLibre)) {
+      toast('Completa tipo de pan, cantidad, fecha, y cliente o destino libre', true); return;
+    }
+    const { error } = await sb.from('entregas').insert({
+      formula_id: formulaId,
+      cliente_id: clienteId || null,
+      destino_libre: clienteId ? null : destinoLibre,
+      cantidad, fecha, nota: nota || null
+    });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('en-cantidad').value = '';
+    document.getElementById('en-fecha').value = '';
+    document.getElementById('en-destino-libre').value = '';
+    document.getElementById('en-nota').value = '';
+    toast('Entrega registrada');
+    cargarProduccion();
   };
 
   // ---------- CLIENTES + SEDES ----------
@@ -711,6 +1037,8 @@
   function poblarSelectClientes() {
     const sel = document.getElementById('nk-cliente');
     sel.innerHTML = CLIENTES.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+    const selEntrega = document.getElementById('en-cliente');
+    selEntrega.innerHTML = '<option value="">Cliente… (o usa destino libre)</option>' + CLIENTES.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
   }
 
   // ---------- CONTACTOS ----------
