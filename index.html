@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trepando — Panel de administrador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --masa: #FCF7F0;
+    --masa-2: #F5EAD4;
+    --horno: #000000;
+    --horno-2: #1A1A1A;
+    --costra: #F4A20C;
+    --costra-2: #C67F0A;
+    --ajonjoli: #F7C15C;
+    --texto: #1A1A1A;
+    --texto-suave: #6E6053;
+    --linea: #EADFC7;
+    --ok: #5C7A4A;
+    --error: #A6432F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--masa);
+    color: var(--texto);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; margin: 0; }
+
+  /* --- Pantalla de PIN --- */
+  #pin-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--horno);
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+  }
+  .brand {
+    color: var(--masa);
+    text-align: center;
+  }
+  .brand .mark {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--costra);
+    margin: 0 auto 14px;
+    position: relative;
+  }
+  .brand .mark::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    background: var(--ajonjoli);
+    border-radius: 50%;
+    box-shadow: -10px -6px 0 var(--ajonjoli), 10px -4px 0 var(--ajonjoli), -4px 8px 0 var(--ajonjoli), 8px 8px 0 var(--ajonjoli);
+    transform: translate(-50%,-50%);
+  }
+  .brand h1 { font-size: 22px; letter-spacing: 0.02em; }
+  .brand p { color: #C9BBA6; font-size: 13px; margin-top: 4px; font-family: inherit; }
+  #pin-form {
+    display: flex; flex-direction: column; gap: 12px; width: 240px;
+  }
+  #pin-input {
+    background: var(--horno-2);
+    border: 1px solid #55453590;
+    color: var(--masa);
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 20px;
+    letter-spacing: 0.3em;
+    text-align: center;
+  }
+  #pin-input:focus { outline: 2px solid var(--costra); }
+  #pin-submit {
+    background: var(--costra);
+    color: var(--masa);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #pin-submit:hover { background: var(--costra-2); }
+  #pin-error { color: #E29B8A; font-size: 13px; text-align: center; min-height: 16px; }
+
+  /* --- App --- */
+  #app { display: none; min-height: 100vh; }
+  header.topbar {
+    background: var(--horno);
+    color: var(--masa);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header.topbar h1 { font-size: 19px; }
+  header.topbar span { color: #C9BBA6; font-size: 12px; }
+
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 14px 28px 0;
+    background: var(--masa);
+    border-bottom: 1px solid var(--linea);
+  }
+  nav.tabs button {
+    background: none;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--texto-suave);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  nav.tabs button.active {
+    color: var(--costra-2);
+    border-bottom: 2px solid var(--costra);
+  }
+
+  main { padding: 28px; max-width: 1100px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px;
+  }
+  .panel-head h2 { font-size: 22px; }
+  .panel-head p { color: var(--texto-suave); font-size: 13px; margin-top: 4px; font-family: inherit; }
+
+  button.primary {
+    background: var(--costra);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.primary:hover { background: var(--costra-2); }
+  button.ghost {
+    background: none;
+    border: 1px solid var(--linea);
+    color: var(--texto);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button.ghost:hover { border-color: var(--costra); color: var(--costra-2); }
+  button.link {
+    background: none; border: none; color: var(--costra-2); cursor: pointer; font-size: 12px; padding: 4px 0; text-decoration: underline;
+  }
+
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(43,33,26,0.08); }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--texto-suave); padding: 12px 14px; background: var(--masa-2); border-bottom: 1px solid var(--linea); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--linea); font-size: 14px; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr.subrow td { background: #FFFCF7; padding: 10px 14px 10px 34px; font-size: 13px; color: var(--texto-suave); }
+
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill.on { background: #E7EFE2; color: var(--ok); }
+  .pill.off { background: #F3E4DF; color: var(--error); }
+
+  .row-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px; background: var(--masa-2); border-radius: 12px; margin-bottom: 14px; }
+  .row-form input, .row-form select {
+    padding: 9px 12px; border: 1px solid var(--linea); border-radius: 7px; font-size: 13px; background: white; color: var(--texto);
+  }
+  .row-form input[type="text"], .row-form input[type="tel"] { flex: 1; min-width: 140px; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--texto-suave); font-size: 13px; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--horno); color: var(--masa); padding: 12px 20px; border-radius: 10px; font-size: 13px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { background: var(--error); }
+
+  select.mini, input.mini { width: 100%; padding: 6px 8px; font-size: 13px; border: 1px solid var(--linea); border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div id="pin-screen">
+  <div class="brand">
+    <div class="mark"></div>
+    <h1>Trepando</h1>
+    <p>Panel de administrador — panadería institucional</p>
+  </div>
+  <form id="pin-form">
+    <input id="pin-input" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+    <button id="pin-submit" type="submit">Entrar</button>
+    <div id="pin-error"></div>
+  </form>
+</div>
+
+<div id="app">
+  <header class="topbar">
+    <h1>Trepando · Administrador</h1>
+    <span id="conn-status">conectando…</span>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="inicio" class="active">Inicio</button>
+    <button data-tab="clientes">Clientes &amp; Sedes</button>
+    <button data-tab="contactos">Contactos</button>
+    <button data-tab="productos">Productos</button>
+  </nav>
+
+  <main>
+
+    <!-- INICIO / DASHBOARD -->
+    <section id="panel-inicio" class="panel active">
+      <div class="panel-head">
+        <div>
+          <h2>Pedidos por entregar</h2>
+          <p>Resumen de pedidos y panes a producir según la fecha de entrega.</p>
+        </div>
+      </div>
+
+      <div class="row-form" style="align-items:center;">
+        <button class="ghost" id="btn-rango-semana">Esta semana</button>
+        <button class="ghost" id="btn-rango-custom">Elegir fechas</button>
+        <span id="rango-custom-inputs" style="display:none; gap:8px; align-items:center;">
+          <input type="date" class="mini" id="rango-desde" style="width:150px">
+          <span style="color:var(--texto-suave); font-size:13px;">hasta</span>
+          <input type="date" class="mini" id="rango-hasta" style="width:150px">
+          <button class="primary" id="btn-aplicar-rango">Aplicar</button>
+        </span>
+        <span id="rango-label" style="margin-left:auto; font-size:13px; color:var(--texto-suave);"></span>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
+        <div>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Panes por tipo</h3>
+          <table>
+            <thead><tr><th>Producto</th><th>Cantidad total</th></tr></thead>
+            <tbody id="tbody-resumen-productos"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Totales del período</h3>
+          <div style="background:white; border-radius:12px; padding:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+            <div style="font-size:36px; font-family:'Playfair Display',serif; color:var(--costra-2);" id="total-panes">0</div>
+            <div style="font-size:13px; color:var(--texto-suave); margin-bottom:14px;">panes en total</div>
+            <div style="font-size:22px; font-family:'Playfair Display',serif;" id="total-pedidos">0</div>
+            <div style="font-size:13px; color:var(--texto-suave);">pedidos en el período</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Detalle de pedidos</h3>
+      <table>
+        <thead>
+          <tr><th>Fecha entrega</th><th>Hora</th><th>Cliente</th><th>Sede</th><th>Producto</th><th>Cantidad</th><th>Estado</th></tr>
+        </thead>
+        <tbody id="tbody-pedidos"></tbody>
+      </table>
+
+      <div class="panel-head" style="margin-top:28px;">
+        <div>
+          <h2 style="font-size:18px;">+ Registrar un pedido nuevo</h2>
+        </div>
+      </div>
+      <div class="row-form" style="flex-wrap:wrap;">
+        <select class="mini" id="np-cliente" style="min-width:160px;"><option value="">Cliente…</option></select>
+        <select class="mini" id="np-contacto" style="min-width:160px;"><option value="">Contacto…</option></select>
+        <select class="mini" id="np-sede" style="min-width:140px;"><option value="">Sede…</option></select>
+        <select class="mini" id="np-producto" style="min-width:160px;"><option value="">Producto…</option></select>
+        <input type="number" class="mini" id="np-cantidad" placeholder="Cantidad" style="width:100px;">
+        <input type="date" class="mini" id="np-fecha" style="width:150px;">
+        <input type="time" class="mini" id="np-hora" style="width:110px;">
+        <button class="primary" onclick="crearPedido()">+ Agregar pedido</button>
+      </div>
+      <p style="font-size:12px; color:var(--texto-suave);">Si un cliente no aparece con contactos o sedes en las listas, primero agrégaselos en la pestaña "Clientes &amp; Sedes" / "Contactos".</p>
+    </section>
+
+    <!-- CLIENTES -->
+    <section id="panel-clientes" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Clientes</h2>
+          <p>Empresas que compran a Trepando. Expande una fila para ver o agregar sedes.</p>
+        </div>
+      </div>
+
+      <div class="row-form">
+        <input type="text" id="nc-nombre" placeholder="Nombre de la empresa">
+        <input type="tel" id="nc-telefono" placeholder="Teléfono principal">
+        <input type="text" id="nc-notas" placeholder="Notas (ej. Paga a 30 días)">
+        <button class="primary" onclick="crearCliente()">+ Agregar cliente</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Empresa</th><th>Teléfono</th><th>Notas</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody id="tbody-clientes"></tbody>
+      </table>
+    </section>
+
+
+    <!-- CONTACTOS -->
+    <section id="panel-contactos" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Contactos</h2>
+          <p>Personas que piden por WhatsApp, con su rol y las sedes para las que pueden pedir.</p>
+        </div>
+      </div>
+
+      <div class="row-form">
+        <select id="nk-cliente" class="mini" style="flex:1"></select>
+        <input type="text" id="nk-nombre" placeholder="Nombre">
+        <input type="tel" id="nk-telefono" placeholder="Teléfono">
+        <input type="text" id="nk-rol" placeholder="Rol (ej. Chef, Gerente)">
+        <button class="primary" onclick="crearContacto()">+ Agregar contacto</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Teléfono</th><th>Sedes asignadas</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody id="tbody-contactos"></tbody>
+      </table>
+    </section>
+
+    <!-- PRODUCTOS -->
+    <section id="panel-productos" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Productos</h2>
+          <p>Catálogo de productos que vende Trepando. Activa o desactiva sin borrar el histórico.</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Producto</th><th>Categoría</th><th>Receta vinculada</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody id="tbody-productos"></tbody>
+      </table>
+
+      <div class="row-form" style="margin-top:14px;">
+        <input type="text" id="np-nombre" placeholder="Nombre del producto nuevo">
+        <input type="text" id="np-categoria" placeholder="Categoría (ej. Pan, Bebida)" value="Pan">
+        <button class="primary" onclick="crearProducto()">+ Agregar producto</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  // ⚠️ EDITA ESTAS DOS LÍNEAS con tus propios valores de Supabase:
+  const SUPABASE_URL = 'https://oimmvztafcehcmphoaxy.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_1ZXDKbCgzLLfDYCbQvXzFg_SnsyUvxT';
+
+  // ⚠️ EDITA ESTA LÍNEA para cambiar el PIN de acceso al panel:
+  const PIN_CORRECTO = 'trepando2026';
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.sb = sb;
+
+  // ---------- PIN ----------
+  const pinForm = document.getElementById('pin-form');
+  pinForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = document.getElementById('pin-input').value.trim();
+    if (val === PIN_CORRECTO) {
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      initApp();
+    } else {
+      document.getElementById('pin-error').textContent = 'PIN incorrecto, intenta de nuevo.';
+      document.getElementById('pin-input').value = '';
+    }
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('nav.tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function toast(msg, isError=false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  let CLIENTES = [], SEDES = [], CONTACTOS = [], CONTACTO_SEDE = [], PRODUCTOS = [], PEDIDOS = [];
+  let rangoDesde, rangoHasta;
+
+  async function initApp() {
+    document.getElementById('conn-status').textContent = 'cargando datos…';
+    setRangoSemanaActual();
+    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos()]);
+    await cargarPedidos();
+    document.getElementById('conn-status').textContent = 'conectado';
+  }
+
+  // ---------- DASHBOARD / INICIO ----------
+  function lunesDeSemana(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    date.setDate(date.getDate() + diff);
+    date.setHours(0,0,0,0);
+    return date;
+  }
+  function domingoDeSemana(d) {
+    const lunes = lunesDeSemana(d);
+    const domingo = new Date(lunes);
+    domingo.setDate(domingo.getDate() + 6);
+    return domingo;
+  }
+  function toISODate(d) {
+    return d.toISOString().slice(0,10);
+  }
+  function fechaLegible(d) {
+    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+  }
+
+  function setRangoSemanaActual() {
+    const hoy = new Date();
+    rangoDesde = lunesDeSemana(hoy);
+    rangoHasta = domingoDeSemana(hoy);
+    actualizarLabelRango();
+  }
+
+  function actualizarLabelRango() {
+    document.getElementById('rango-label').textContent =
+      `${fechaLegible(rangoDesde)} — ${fechaLegible(rangoHasta)}`;
+  }
+
+  document.getElementById('btn-rango-semana').addEventListener('click', () => {
+    setRangoSemanaActual();
+    document.getElementById('rango-custom-inputs').style.display = 'none';
+    cargarPedidos();
+  });
+  document.getElementById('btn-rango-custom').addEventListener('click', () => {
+    document.getElementById('rango-custom-inputs').style.display = 'inline-flex';
+    document.getElementById('rango-desde').value = toISODate(rangoDesde);
+    document.getElementById('rango-hasta').value = toISODate(rangoHasta);
+  });
+  document.getElementById('btn-aplicar-rango').addEventListener('click', () => {
+    const d = document.getElementById('rango-desde').value;
+    const h = document.getElementById('rango-hasta').value;
+    if (!d || !h) { toast('Selecciona ambas fechas', true); return; }
+    rangoDesde = new Date(d + 'T00:00:00');
+    rangoHasta = new Date(h + 'T00:00:00');
+    actualizarLabelRango();
+    cargarPedidos();
+  });
+
+  async function cargarPedidos() {
+    const { data, error } = await sb.from('pedidos')
+      .select('*, productos(nombre), sedes(nombre), contactos(nombre, clientes(nombre))')
+      .gte('fecha_entrega', toISODate(rangoDesde))
+      .lte('fecha_entrega', toISODate(rangoHasta))
+      .order('fecha_entrega', { ascending: true });
+    if (error) { toast('Error cargando pedidos: ' + error.message, true); return; }
+    PEDIDOS = data || [];
+    renderDashboard();
+    poblarSelectPedidoForm();
+  }
+
+  function renderDashboard() {
+    const totalPanes = PEDIDOS.reduce((sum, p) => sum + (p.cantidad || 0), 0);
+    document.getElementById('total-panes').textContent = totalPanes.toLocaleString('es-CO');
+    document.getElementById('total-pedidos').textContent = PEDIDOS.length;
+
+    const porProducto = {};
+    PEDIDOS.forEach(p => {
+      const nombre = p.productos ? p.productos.nombre : 'Sin producto';
+      porProducto[nombre] = (porProducto[nombre] || 0) + (p.cantidad || 0);
+    });
+    const tbodyResumen = document.getElementById('tbody-resumen-productos');
+    const entradas = Object.entries(porProducto).sort((a,b) => b[1]-a[1]);
+    tbodyResumen.innerHTML = entradas.length
+      ? entradas.map(([nombre, cant]) => `<tr><td>${esc(nombre)}</td><td><strong>${cant.toLocaleString('es-CO')}</strong></td></tr>`).join('')
+      : '<tr><td colspan="2" class="empty">Sin pedidos en este período</td></tr>';
+
+    const tbodyPedidos = document.getElementById('tbody-pedidos');
+    tbodyPedidos.innerHTML = PEDIDOS.length
+      ? PEDIDOS.map(p => `
+          <tr>
+            <td>${p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short'}) : '—'}</td>
+            <td>${esc(p.hora_entrega || '—')}</td>
+            <td>${esc(p.contactos?.clientes?.nombre || '—')}</td>
+            <td>${esc(p.sedes?.nombre || '—')}</td>
+            <td>${esc(p.productos?.nombre || '—')}</td>
+            <td>${p.cantidad}</td>
+            <td><span class="pill ${p.estado === 'Entregado' ? 'on' : 'off'}">${esc(p.estado || 'Pendiente')}</span></td>
+          </tr>`).join('')
+      : '<tr><td colspan="7" class="empty">No hay pedidos con entrega en este rango de fechas.</td></tr>';
+  }
+
+  function poblarSelectPedidoForm() {
+    const selCliente = document.getElementById('np-cliente');
+    selCliente.innerHTML = '<option value="">Cliente…</option>' + CLIENTES.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+    const selProducto = document.getElementById('np-producto');
+    selProducto.innerHTML = '<option value="">Producto…</option>' + PRODUCTOS.filter(p => p.activo !== false).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+  }
+
+  document.getElementById('np-cliente').addEventListener('change', (e) => {
+    const clienteId = parseInt(e.target.value, 10);
+    const selContacto = document.getElementById('np-contacto');
+    const selSede = document.getElementById('np-sede');
+    const contactosCliente = CONTACTOS.filter(k => k.cliente_id === clienteId && k.activo !== false);
+    const sedesCliente = SEDES.filter(s => s.cliente_id === clienteId);
+    selContacto.innerHTML = '<option value="">Contacto…</option>' + contactosCliente.map(k => `<option value="${k.id}">${esc(k.nombre)}</option>`).join('');
+    selSede.innerHTML = '<option value="">Sede…</option>' + sedesCliente.map(s => `<option value="${s.id}">${esc(s.nombre)}</option>`).join('');
+  });
+
+  window.crearPedido = async function() {
+    const contactoId = document.getElementById('np-contacto').value;
+    const sedeId = document.getElementById('np-sede').value;
+    const productoId = document.getElementById('np-producto').value;
+    const cantidad = parseInt(document.getElementById('np-cantidad').value, 10);
+    const fecha = document.getElementById('np-fecha').value;
+    const hora = document.getElementById('np-hora').value;
+    if (!contactoId || !sedeId || !productoId || !cantidad || !fecha) {
+      toast('Completa contacto, sede, producto, cantidad y fecha de entrega', true); return;
+    }
+    const { error } = await sb.from('pedidos').insert({
+      contacto_id: contactoId, sede_id: sedeId, producto_id: productoId,
+      cantidad, fecha_entrega: fecha, hora_entrega: hora || null
+    });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('np-cantidad').value = '';
+    document.getElementById('np-fecha').value = '';
+    document.getElementById('np-hora').value = '';
+    toast('Pedido registrado');
+    cargarPedidos();
+  };
+
+  // ---------- CLIENTES + SEDES ----------
+  async function cargarClientes() {
+    const { data: clientes, error: e1 } = await sb.from('clientes').select('*').order('nombre');
+    const { data: sedes, error: e2 } = await sb.from('sedes').select('*');
+    if (e1 || e2) { toast('Error cargando clientes: ' + (e1?.message || e2?.message), true); return; }
+    CLIENTES = clientes || [];
+    SEDES = sedes || [];
+    renderClientes();
+    poblarSelectClientes();
+  }
+
+  function renderClientes() {
+    const tbody = document.getElementById('tbody-clientes');
+    if (!CLIENTES.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Aún no hay clientes. Agrega el primero arriba.</td></tr>'; return; }
+    tbody.innerHTML = '';
+    CLIENTES.forEach(c => {
+      const sedesDeCliente = SEDES.filter(s => s.cliente_id === c.id);
+      const tr = document.createElement('tr');
+      tr.dataset.rowFor = c.id;
+      pintarFilaCliente(tr, c);
+      tbody.appendChild(tr);
+
+      const subTr = document.createElement('tr');
+      subTr.className = 'subrow';
+      subTr.style.display = 'none';
+      subTr.setAttribute('data-sub-for', c.id);
+      const sedesList = sedesDeCliente.map(s => `
+        <li data-sede-li="${s.id}">
+          <span data-sede-view="${s.id}">${esc(s.nombre)} <button class="link" data-sede-edit="${s.id}">Editar</button></span>
+        </li>`).join('') || '<li style="color:var(--texto-suave)">Sin sedes aún</li>';
+      const subTd = document.createElement('td');
+      subTd.colSpan = 5;
+      subTd.innerHTML = `
+        <ul style="margin:0 0 8px 16px; padding:0;">${sedesList}</ul>
+        <div style="display:flex; gap:8px;">
+          <input type="text" class="mini" style="width:200px" placeholder="Nombre de la sede nueva" id="sede-input-${c.id}">
+          <button class="ghost" onclick="agregarSede(${c.id})">+ Agregar sede</button>
+        </div>
+      `;
+      subTr.appendChild(subTd);
+      tbody.appendChild(subTr);
+
+      sedesDeCliente.forEach(s => {
+        const li = subTd.querySelector(`li[data-sede-li="${s.id}"]`);
+        li.querySelector('[data-sede-edit]').addEventListener('click', () => {
+          const span = li.querySelector('[data-sede-view]');
+          span.innerHTML = `
+            <input type="text" class="mini" style="width:160px" id="sede-ed-${s.id}" value="${escAttr(s.nombre)}">
+            <button class="link" data-sede-save="${s.id}">Guardar</button>
+            <button class="link" data-sede-cancel="${s.id}">Cancelar</button>
+          `;
+          span.querySelector('[data-sede-save]').addEventListener('click', () => guardarSede(s.id));
+          span.querySelector('[data-sede-cancel]').addEventListener('click', () => cargarClientes());
+        });
+      });
+
+    });
+  }
+
+  window.guardarSede = async function(id) {
+    const nombre = document.getElementById('sede-ed-' + id).value.trim();
+    if (!nombre) { toast('El nombre de la sede no puede quedar vacío', true); return; }
+    const { error } = await sb.from('sedes').update({ nombre }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Sede actualizada');
+    cargarClientes();
+  };
+
+  function pintarFilaCliente(tr, c) {
+    const sedesDeCliente = SEDES.filter(s => s.cliente_id === c.id);
+    tr.innerHTML = `
+      <td><button class="link" data-edit="${c.id}">Editar</button> &nbsp;<strong>${esc(c.nombre)}</strong></td>
+      <td>${esc(c.telefono_principal || '—')}</td>
+      <td>${esc(c.notas || '—')}</td>
+      <td><span class="pill ${c.activo === false ? 'off' : 'on'}">${c.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="link" data-toggle="${c.id}">${sedesDeCliente.length} sede(s) ▾</button>
+      </td>
+    `;
+    tr.querySelector('[data-toggle]').addEventListener('click', () => {
+      const subTr = document.querySelector(`tr[data-sub-for="${c.id}"]`);
+      subTr.style.display = subTr.style.display === 'none' ? 'table-row' : 'none';
+    });
+    tr.querySelector('[data-edit]').addEventListener('click', () => pintarFilaClienteEdicion(tr, c));
+  }
+
+  function pintarFilaClienteEdicion(tr, c) {
+    tr.innerHTML = `
+      <td><input type="text" class="mini" id="ed-nombre-${c.id}" value="${escAttr(c.nombre)}"></td>
+      <td><input type="tel" class="mini" id="ed-telefono-${c.id}" value="${escAttr(c.telefono_principal || '')}"></td>
+      <td><input type="text" class="mini" id="ed-notas-${c.id}" value="${escAttr(c.notas || '')}"></td>
+      <td>
+        <select class="mini" id="ed-activo-${c.id}">
+          <option value="true" ${c.activo !== false ? 'selected' : ''}>Activo</option>
+          <option value="false" ${c.activo === false ? 'selected' : ''}>Inactivo</option>
+        </select>
+      </td>
+      <td style="white-space:nowrap;">
+        <button class="link" data-save="${c.id}">Guardar</button>
+        &nbsp;·&nbsp;
+        <button class="link" data-cancel="${c.id}">Cancelar</button>
+      </td>
+    `;
+    tr.querySelector('[data-save]').addEventListener('click', () => guardarCliente(c.id));
+    tr.querySelector('[data-cancel]').addEventListener('click', () => { pintarFilaCliente(tr, c); });
+  }
+
+  async function guardarCliente(id) {
+    const nombre = document.getElementById('ed-nombre-' + id).value.trim();
+    const telefono = document.getElementById('ed-telefono-' + id).value.trim();
+    const notas = document.getElementById('ed-notas-' + id).value.trim();
+    const activo = document.getElementById('ed-activo-' + id).value === 'true';
+    if (!nombre) { toast('El nombre no puede quedar vacío', true); return; }
+    const { error } = await sb.from('clientes').update({
+      nombre, telefono_principal: telefono || null, notas: notas || null, activo
+    }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Cliente actualizado');
+    cargarClientes();
+  }
+
+  function escAttr(str) {
+    return esc(str).replace(/"/g, '&quot;');
+  }
+
+  window.crearCliente = async function() {
+    const nombre = document.getElementById('nc-nombre').value.trim();
+    const telefono = document.getElementById('nc-telefono').value.trim();
+    const notas = document.getElementById('nc-notas').value.trim();
+    if (!nombre) { toast('Ponle un nombre al cliente', true); return; }
+    const { error } = await sb.from('clientes').insert({ nombre, telefono_principal: telefono || null, notas: notas || null });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('nc-nombre').value = '';
+    document.getElementById('nc-telefono').value = '';
+    document.getElementById('nc-notas').value = '';
+    toast('Cliente agregado');
+    cargarClientes();
+  };
+
+  window.agregarSede = async function(clienteId) {
+    const input = document.getElementById('sede-input-' + clienteId);
+    const nombre = input.value.trim();
+    if (!nombre) { toast('Ponle un nombre a la sede', true); return; }
+    const { error } = await sb.from('sedes').insert({ cliente_id: clienteId, nombre });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    input.value = '';
+    toast('Sede agregada');
+    cargarClientes();
+  };
+
+  function poblarSelectClientes() {
+    const sel = document.getElementById('nk-cliente');
+    sel.innerHTML = CLIENTES.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+  }
+
+  // ---------- CONTACTOS ----------
+  window.crearContacto = async function() {
+    const clienteId = document.getElementById('nk-cliente').value;
+    const nombre = document.getElementById('nk-nombre').value.trim();
+    const telefono = document.getElementById('nk-telefono').value.trim();
+    const rol = document.getElementById('nk-rol').value.trim();
+    if (!clienteId || !nombre) { toast('Selecciona un cliente y pon el nombre', true); return; }
+    const { error } = await sb.from('contactos').insert({ cliente_id: clienteId, nombre, telefono: telefono || null, rol: rol || null });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('nk-nombre').value = '';
+    document.getElementById('nk-telefono').value = '';
+    document.getElementById('nk-rol').value = '';
+    toast('Contacto agregado');
+    cargarContactos();
+  };
+
+  async function cargarContactos() {
+    const { data, error } = await sb.from('contactos').select('*');
+    const { data: cs, error: e2 } = await sb.from('contacto_sede').select('*');
+    if (error || e2) { toast('Error cargando contactos: ' + (error?.message || e2?.message), true); return; }
+    CONTACTOS = data || [];
+    CONTACTO_SEDE = cs || [];
+    renderContactos();
+  }
+
+  function renderContactos() {
+    const tbody = document.getElementById('tbody-contactos');
+    if (!CONTACTOS.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Aún no hay contactos.</td></tr>'; return; }
+    tbody.innerHTML = '';
+    CONTACTOS.forEach(k => {
+      const tr = document.createElement('tr');
+      tr.dataset.rowFor = k.id;
+      pintarFilaContacto(tr, k);
+      tbody.appendChild(tr);
+
+      const subTr = document.createElement('tr');
+      subTr.className = 'subrow';
+      subTr.style.display = 'none';
+      subTr.setAttribute('data-sub-k-for', k.id);
+      const sedesDelCliente = SEDES.filter(s => s.cliente_id === k.cliente_id);
+      const asignadasIds = CONTACTO_SEDE.filter(cs => cs.contacto_id === k.id).map(cs => cs.sede_id);
+      const subTd = document.createElement('td');
+      subTd.colSpan = 7;
+      subTd.innerHTML = sedesDelCliente.length
+        ? sedesDelCliente.map(s => `
+            <label style="margin-right:16px; font-size:13px;">
+              <input type="checkbox" data-sede-check="${s.id}" ${asignadasIds.includes(s.id) ? 'checked' : ''}>
+              ${esc(s.nombre)}
+            </label>`).join('')
+        : '<span style="color:var(--texto-suave)">Esta empresa aún no tiene sedes registradas — agrégalas en "Clientes &amp; Sedes".</span>';
+      subTr.appendChild(subTd);
+      tbody.appendChild(subTr);
+
+      subTd.querySelectorAll('[data-sede-check]').forEach(chk => {
+        chk.addEventListener('change', () => toggleContactoSede(k.id, parseInt(chk.dataset.sedeCheck, 10), chk.checked));
+      });
+    });
+  }
+
+  async function toggleContactoSede(contactoId, sedeId, marcado) {
+    if (marcado) {
+      const { error } = await sb.from('contacto_sede').insert({ contacto_id: contactoId, sede_id: sedeId });
+      if (error) { toast('Error: ' + error.message, true); return; }
+    } else {
+      const { error } = await sb.from('contacto_sede').delete().eq('contacto_id', contactoId).eq('sede_id', sedeId);
+      if (error) { toast('Error: ' + error.message, true); return; }
+    }
+    toast('Asignación actualizada');
+    const { data } = await sb.from('contacto_sede').select('*');
+    CONTACTO_SEDE = data || [];
+    renderContactoResumen(contactoId);
+  }
+
+  function renderContactoResumen(contactoId) {
+    const tr = document.querySelector(`tbody#tbody-contactos tr[data-row-for="${contactoId}"]`);
+    const k = CONTACTOS.find(x => x.id === contactoId);
+    if (tr && k) pintarFilaContacto(tr, k);
+  }
+
+  function pintarFilaContacto(tr, k) {
+    const cliente = CLIENTES.find(c => c.id === k.cliente_id);
+    const asignadas = CONTACTO_SEDE.filter(cs => cs.contacto_id === k.id)
+      .map(cs => SEDES.find(s => s.id === cs.sede_id)?.nombre)
+      .filter(Boolean);
+    tr.innerHTML = `
+      <td><button class="link" data-edit-k="${k.id}">Editar</button> &nbsp;<strong>${esc(k.nombre)}</strong></td>
+      <td>${esc(cliente ? cliente.nombre : '—')}</td>
+      <td>${esc(k.rol || '—')}</td>
+      <td>${esc(k.telefono || '—')}</td>
+      <td><button class="link" data-toggle-k="${k.id}">${asignadas.length ? esc(asignadas.join(', ')) : 'Sin sedes'} ▾</button></td>
+      <td><span class="pill ${k.activo === false ? 'off' : 'on'}">${k.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      <td><button class="ghost" data-toggle-activo-k="${k.id}">${k.activo === false ? 'Activar' : 'Desactivar'}</button></td>
+    `;
+    tr.querySelector('[data-edit-k]').addEventListener('click', () => pintarFilaContactoEdicion(tr, k));
+    tr.querySelector('[data-toggle-k]').addEventListener('click', () => {
+      const subTr = document.querySelector(`tr[data-sub-k-for="${k.id}"]`);
+      subTr.style.display = subTr.style.display === 'none' ? 'table-row' : 'none';
+    });
+    tr.querySelector('[data-toggle-activo-k]').addEventListener('click', () => toggleActivoContacto(k.id, k.activo === false));
+  }
+
+  async function toggleActivoContacto(id, activar) {
+    const { error } = await sb.from('contactos').update({ activo: activar }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast(activar ? 'Contacto activado' : 'Contacto desactivado');
+    cargarContactos();
+  }
+
+  function pintarFilaContactoEdicion(tr, k) {
+    const opcionesClientes = CLIENTES.map(c => `<option value="${c.id}" ${c.id === k.cliente_id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('');
+    tr.innerHTML = `
+      <td><input type="text" class="mini" id="edk-nombre-${k.id}" value="${escAttr(k.nombre)}"></td>
+      <td><select class="mini" id="edk-cliente-${k.id}">${opcionesClientes}</select></td>
+      <td><input type="text" class="mini" id="edk-rol-${k.id}" value="${escAttr(k.rol || '')}"></td>
+      <td><input type="tel" class="mini" id="edk-telefono-${k.id}" value="${escAttr(k.telefono || '')}"></td>
+      <td colspan="2" style="white-space:nowrap;">
+        <button class="link" data-save-k="${k.id}">Guardar</button>
+        &nbsp;·&nbsp;
+        <button class="link" data-cancel-k="${k.id}">Cancelar</button>
+      </td>
+      <td></td>
+    `;
+    tr.querySelector('[data-save-k]').addEventListener('click', () => guardarContacto(k.id));
+    tr.querySelector('[data-cancel-k]').addEventListener('click', () => pintarFilaContacto(tr, k));
+  }
+
+  async function guardarContacto(id) {
+    const nombre = document.getElementById('edk-nombre-' + id).value.trim();
+    const clienteId = document.getElementById('edk-cliente-' + id).value;
+    const rol = document.getElementById('edk-rol-' + id).value.trim();
+    const telefono = document.getElementById('edk-telefono-' + id).value.trim();
+    if (!nombre) { toast('El nombre no puede quedar vacío', true); return; }
+    const { error } = await sb.from('contactos').update({
+      nombre, cliente_id: clienteId, rol: rol || null, telefono: telefono || null
+    }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Contacto actualizado');
+    cargarContactos();
+  }
+
+  // ---------- PRODUCTOS ----------
+  async function cargarProductos() {
+    const { data, error } = await sb.from('productos').select('*, formulas(nombre)').order('nombre');
+    if (error) { toast('Error cargando productos: ' + error.message, true); return; }
+    PRODUCTOS = data || [];
+    renderProductos();
+  }
+
+  function renderProductos() {
+    const tbody = document.getElementById('tbody-productos');
+    if (!PRODUCTOS.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Aún no hay productos.</td></tr>'; return; }
+    tbody.innerHTML = '';
+    PRODUCTOS.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${esc(p.nombre)}</strong></td>
+        <td>${esc(p.categoria)}</td>
+        <td>${esc(p.formulas ? p.formulas.nombre : '— sin receta —')}</td>
+        <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+        <td><button class="ghost" data-toggle-prod="${p.id}">${p.activo === false ? 'Activar' : 'Desactivar'}</button></td>
+      `;
+      tbody.appendChild(tr);
+      tr.querySelector('[data-toggle-prod]').addEventListener('click', () => toggleProducto(p.id, p.activo === false));
+    });
+  }
+
+  async function toggleProducto(id, activar) {
+    const { error } = await sb.from('productos').update({ activo: activar }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast(activar ? 'Producto activado' : 'Producto desactivado');
+    cargarProductos();
+  }
+
+  window.crearProducto = async function() {
+    const nombre = document.getElementById('np-nombre').value.trim();
+    const categoria = document.getElementById('np-categoria').value.trim() || 'Pan';
+    if (!nombre) { toast('Ponle un nombre al producto', true); return; }
+    const { error } = await sb.from('productos').insert({ nombre, categoria });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('np-nombre').value = '';
+    toast('Producto agregado');
+    cargarProductos();
+  };
+
+  // Cargar contactos cuando se abre esa pestaña la primera vez
+  document.querySelector('[data-tab="contactos"]').addEventListener('click', () => {
+    if (!CONTACTOS.length) cargarContactos();
+  }, { once: true });
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
+  }
+</script>
+
+</body>
+</html>
