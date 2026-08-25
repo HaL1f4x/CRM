@@ -294,7 +294,7 @@
       <div class="panel-head">
         <div>
           <h2>Producción y entregas</h2>
-          <p>Lo horneado, lo entregado y el inventario pendiente por tipo de pan.</p>
+          <p>Lo horneado, lo entregado y el inventario pendiente por producto.</p>
         </div>
       </div>
 
@@ -312,16 +312,16 @@
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
         <div>
-          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Producción por tipo de pan (período)</h3>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Producción por producto (período)</h3>
           <table>
-            <thead><tr><th>Tipo de pan</th><th>Cantidad producida</th></tr></thead>
+            <thead><tr><th>Producto</th><th>Cantidad producida</th></tr></thead>
             <tbody id="tbody-produccion-tipo"></tbody>
           </table>
         </div>
         <div>
-          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Entregas por tipo de pan y destino (período)</h3>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Entregas por producto y destino (período)</h3>
           <table>
-            <thead><tr><th>Tipo de pan</th><th>Destino</th><th>Cantidad</th></tr></thead>
+            <thead><tr><th>Producto</th><th>Destino</th><th>Cantidad</th></tr></thead>
             <tbody id="tbody-entregas-detalle"></tbody>
           </table>
         </div>
@@ -329,13 +329,13 @@
 
       <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Inventario pendiente (histórico total — no depende del rango de fechas de arriba)</h3>
       <table style="margin-bottom:28px;">
-        <thead><tr><th>Tipo de pan</th><th>Producido total</th><th>Entregado total</th><th>Pendiente</th></tr></thead>
+        <thead><tr><th>Producto</th><th>Producido total</th><th>Entregado total</th><th>Pendiente</th></tr></thead>
         <tbody id="tbody-inventario"></tbody>
       </table>
 
-      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Historial día por día de un tipo de pan (histórico completo)</h3>
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Historial día por día de un producto (histórico completo)</h3>
       <div class="row-form">
-        <select class="mini" id="hist-formula" style="min-width:220px;"><option value="">Elige un tipo de pan…</option></select>
+        <select class="mini" id="hist-producto" style="min-width:220px;"><option value="">Elige un producto…</option></select>
       </div>
       <div id="hist-tabla-wrap" style="display:none;">
         <h3 id="hist-titulo" style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;"></h3>
@@ -351,7 +351,7 @@
         </div>
       </div>
       <div class="row-form" style="flex-wrap:wrap;">
-        <select class="mini" id="lp-formula" style="min-width:180px;"><option value="">Tipo de pan…</option></select>
+        <select class="mini" id="lp-producto" style="min-width:180px;"><option value="">Producto…</option></select>
         <input type="number" class="mini" id="lp-cantidad" placeholder="Cantidad" style="width:110px;">
         <input type="date" class="mini" id="lp-fecha" style="width:150px;">
         <input type="text" class="mini" id="lp-nota" placeholder="Nota (opcional)" style="min-width:160px; flex:1;">
@@ -364,7 +364,7 @@
         </div>
       </div>
       <div class="row-form" style="flex-wrap:wrap;">
-        <select class="mini" id="en-formula" style="min-width:180px;"><option value="">Tipo de pan…</option></select>
+        <select class="mini" id="en-producto" style="min-width:180px;"><option value="">Producto…</option></select>
         <select class="mini" id="en-cliente" style="min-width:160px;"><option value="">Cliente…</option></select>
         <input type="text" class="mini" id="en-destino-libre" placeholder="o destino libre (ej. Mostrador Pizzamos)" style="min-width:200px; flex:1;">
         <input type="number" class="mini" id="en-cantidad" placeholder="Cantidad" style="width:110px;">
@@ -499,7 +499,7 @@
   }
 
   let CLIENTES = [], SEDES = [], CONTACTOS = [], CONTACTO_SEDE = [], PRODUCTOS = [], PEDIDOS = [];
-  let FORMULAS = [], LOTES_PRODUCIDOS = [], ENTREGAS = [];
+  let LOTES_PRODUCIDOS = [], ENTREGAS = [];
   let CLIENTE_PRODUCTO = [];
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
@@ -508,7 +508,7 @@
     document.getElementById('conn-status').textContent = 'cargando datos…';
     setRangoSemanaActual();
     setRangoProdSemanaActual();
-    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarFormulas(), cargarClienteProducto()]);
+    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarClienteProducto()]);
     await Promise.all([cargarPedidos(), cargarProduccion()]);
     document.getElementById('conn-status').textContent = 'conectado';
   }
@@ -692,23 +692,17 @@
     cargarProduccion();
   });
 
-  async function cargarFormulas() {
-    const { data, error } = await sb.from('formulas').select('*').order('nombre');
-    if (error) { toast('Error cargando fórmulas: ' + error.message, true); return; }
-    FORMULAS = data || [];
-    poblarSelectsFormula();
+  function poblarSelectsProducto() {
+    const productosActivos = PRODUCTOS.filter(p => p.activo !== false);
+    const opciones = '<option value="">Producto…</option>' + productosActivos.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+    document.getElementById('lp-producto').innerHTML = opciones;
+    document.getElementById('en-producto').innerHTML = opciones;
+    document.getElementById('hist-producto').innerHTML = '<option value="">Elige un producto…</option>' + productosActivos.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
   }
 
-  function poblarSelectsFormula() {
-    const opciones = '<option value="">Tipo de pan…</option>' + FORMULAS.map(f => `<option value="${f.id}">${esc(f.nombre)}</option>`).join('');
-    document.getElementById('lp-formula').innerHTML = opciones;
-    document.getElementById('en-formula').innerHTML = opciones;
-    document.getElementById('hist-formula').innerHTML = '<option value="">Elige un tipo de pan…</option>' + FORMULAS.map(f => `<option value="${f.id}">${esc(f.nombre)}</option>`).join('');
-  }
-
-  function nombreFormula(id) {
-    const f = FORMULAS.find(x => x.id === id);
-    return f ? f.nombre : 'Tipo desconocido';
+  function nombreProducto(id) {
+    const p = PRODUCTOS.find(x => x.id === id);
+    return p ? p.nombre : 'Producto desconocido';
   }
 
   async function cargarProduccion() {
@@ -717,7 +711,7 @@
 
   async function cargarLotesProducidos() {
     const { data, error } = await sb.from('lotes_producidos')
-      .select('*, formulas(nombre)')
+      .select('*, productos(nombre)')
       .gte('fecha', toISODate(rangoProdDesde))
       .lte('fecha', toISODate(rangoProdHasta))
       .order('fecha', { ascending: true });
@@ -727,13 +721,13 @@
   }
 
   function renderProduccionTipo() {
-    const porTipo = {};
+    const porProducto = {};
     LOTES_PRODUCIDOS.forEach(l => {
-      const nombre = l.formulas ? l.formulas.nombre : 'Sin tipo';
-      porTipo[nombre] = (porTipo[nombre] || 0) + (l.cantidad_panes || 0);
+      const nombre = l.productos ? l.productos.nombre : 'Sin producto';
+      porProducto[nombre] = (porProducto[nombre] || 0) + (l.cantidad_panes || 0);
     });
     const tbody = document.getElementById('tbody-produccion-tipo');
-    const entradas = Object.entries(porTipo).sort((a,b) => b[1]-a[1]);
+    const entradas = Object.entries(porProducto).sort((a,b) => b[1]-a[1]);
     tbody.innerHTML = entradas.length
       ? entradas.map(([nombre, cant]) => `<tr><td>${esc(nombre)}</td><td><strong>${cant.toLocaleString('es-CO')}</strong></td></tr>`).join('')
       : '<tr><td colspan="2" class="empty">Sin producción en este período</td></tr>';
@@ -741,7 +735,7 @@
 
   async function cargarEntregas() {
     const { data, error } = await sb.from('entregas')
-      .select('*, formulas(nombre), clientes(nombre)')
+      .select('*, productos(nombre), clientes(nombre)')
       .gte('fecha', toISODate(rangoProdDesde))
       .lte('fecha', toISODate(rangoProdHasta))
       .order('fecha', { ascending: true });
@@ -751,38 +745,38 @@
   }
 
   function renderEntregasDetalle() {
-    const porTipoDestino = {};
+    const porProductoDestino = {};
     ENTREGAS.forEach(e => {
-      const tipo = e.formulas ? e.formulas.nombre : 'Sin tipo';
+      const producto = e.productos ? e.productos.nombre : 'Sin producto';
       const destino = e.clientes ? e.clientes.nombre : (e.destino_libre || 'Sin destino');
-      const key = tipo + '|' + destino;
-      if (!porTipoDestino[key]) porTipoDestino[key] = { tipo, destino, cantidad: 0 };
-      porTipoDestino[key].cantidad += (e.cantidad || 0);
+      const key = producto + '|' + destino;
+      if (!porProductoDestino[key]) porProductoDestino[key] = { producto, destino, cantidad: 0 };
+      porProductoDestino[key].cantidad += (e.cantidad || 0);
     });
     const tbody = document.getElementById('tbody-entregas-detalle');
-    const filas = Object.values(porTipoDestino).sort((a,b) => b.cantidad - a.cantidad);
+    const filas = Object.values(porProductoDestino).sort((a,b) => b.cantidad - a.cantidad);
     tbody.innerHTML = filas.length
-      ? filas.map(f => `<tr><td>${esc(f.tipo)}</td><td>${esc(f.destino)}</td><td><strong>${f.cantidad.toLocaleString('es-CO')}</strong></td></tr>`).join('')
+      ? filas.map(f => `<tr><td>${esc(f.producto)}</td><td>${esc(f.destino)}</td><td><strong>${f.cantidad.toLocaleString('es-CO')}</strong></td></tr>`).join('')
       : '<tr><td colspan="3" class="empty">Sin entregas en este período</td></tr>';
   }
 
   async function cargarInventario() {
     const [{ data: prodData, error: e1 }, { data: entData, error: e2 }] = await Promise.all([
-      sb.from('lotes_producidos').select('formula_id, cantidad_panes'),
-      sb.from('entregas').select('formula_id, cantidad')
+      sb.from('lotes_producidos').select('producto_id, cantidad_panes'),
+      sb.from('entregas').select('producto_id, cantidad')
     ]);
     if (e1 || e2) { toast('Error cargando inventario: ' + (e1?.message || e2?.message), true); return; }
 
-    const producidoPorFormula = {};
-    (prodData || []).forEach(l => { producidoPorFormula[l.formula_id] = (producidoPorFormula[l.formula_id] || 0) + (l.cantidad_panes || 0); });
-    const entregadoPorFormula = {};
-    (entData || []).forEach(e => { entregadoPorFormula[e.formula_id] = (entregadoPorFormula[e.formula_id] || 0) + (e.cantidad || 0); });
+    const producidoPorProducto = {};
+    (prodData || []).forEach(l => { producidoPorProducto[l.producto_id] = (producidoPorProducto[l.producto_id] || 0) + (l.cantidad_panes || 0); });
+    const entregadoPorProducto = {};
+    (entData || []).forEach(e => { entregadoPorProducto[e.producto_id] = (entregadoPorProducto[e.producto_id] || 0) + (e.cantidad || 0); });
 
-    const formulaIds = new Set([...Object.keys(producidoPorFormula), ...Object.keys(entregadoPorFormula)].map(Number));
-    const filas = [...formulaIds].map(id => {
-      const producido = producidoPorFormula[id] || 0;
-      const entregado = entregadoPorFormula[id] || 0;
-      return { nombre: nombreFormula(id), producido, entregado, pendiente: producido - entregado };
+    const productoIds = new Set([...Object.keys(producidoPorProducto), ...Object.keys(entregadoPorProducto)].map(Number));
+    const filas = [...productoIds].map(id => {
+      const producido = producidoPorProducto[id] || 0;
+      const entregado = entregadoPorProducto[id] || 0;
+      return { nombre: nombreProducto(id), producido, entregado, pendiente: producido - entregado };
     }).sort((a,b) => b.pendiente - a.pendiente);
 
     const tbody = document.getElementById('tbody-inventario');
@@ -797,16 +791,16 @@
       : '<tr><td colspan="4" class="empty">Sin datos de producción o entregas todavía</td></tr>';
   }
 
-  document.getElementById('hist-formula').addEventListener('change', cargarHistorialFormula);
+  document.getElementById('hist-producto').addEventListener('change', cargarHistorialProducto);
 
-  async function cargarHistorialFormula() {
-    const formulaId = document.getElementById('hist-formula').value;
+  async function cargarHistorialProducto() {
+    const productoId = document.getElementById('hist-producto').value;
     const wrap = document.getElementById('hist-tabla-wrap');
-    if (!formulaId) { wrap.style.display = 'none'; return; }
+    if (!productoId) { wrap.style.display = 'none'; return; }
 
     const [{ data: prodData, error: e1 }, { data: entData, error: e2 }] = await Promise.all([
-      sb.from('lotes_producidos').select('fecha, cantidad_panes').eq('formula_id', formulaId),
-      sb.from('entregas').select('fecha, cantidad').eq('formula_id', formulaId)
+      sb.from('lotes_producidos').select('fecha, cantidad_panes').eq('producto_id', productoId),
+      sb.from('entregas').select('fecha, cantidad').eq('producto_id', productoId)
     ]);
     if (e1 || e2) { toast('Error cargando historial: ' + (e1?.message || e2?.message), true); return; }
 
@@ -826,7 +820,7 @@
     });
     filas.reverse(); // fecha más reciente arriba
 
-    document.getElementById('hist-titulo').textContent = `Historial de ${nombreFormula(parseInt(formulaId, 10))}`;
+    document.getElementById('hist-titulo').textContent = `Historial de ${nombreProducto(parseInt(productoId, 10))}`;
     const tbody = document.getElementById('tbody-historial');
     tbody.innerHTML = filas.length
       ? filas.map(f => `
@@ -836,20 +830,20 @@
             <td>${f.entregado ? f.entregado.toLocaleString('es-CO') : '—'}</td>
             <td><strong style="color:${f.saldo < 0 ? 'var(--error)' : 'var(--texto)'}">${f.saldo.toLocaleString('es-CO')}</strong></td>
           </tr>`).join('')
-      : '<tr><td colspan="4" class="empty">Sin movimientos registrados para este tipo de pan</td></tr>';
+      : '<tr><td colspan="4" class="empty">Sin movimientos registrados para este producto</td></tr>';
     wrap.style.display = 'block';
   }
 
   window.crearLoteProduccion = async function() {
-    const formulaId = document.getElementById('lp-formula').value;
+    const productoId = document.getElementById('lp-producto').value;
     const cantidad = parseInt(document.getElementById('lp-cantidad').value, 10);
     const fecha = document.getElementById('lp-fecha').value;
     const nota = document.getElementById('lp-nota').value.trim();
-    if (!formulaId || !cantidad || !fecha) {
-      toast('Completa tipo de pan, cantidad y fecha', true); return;
+    if (!productoId || !cantidad || !fecha) {
+      toast('Completa producto, cantidad y fecha', true); return;
     }
     const { error } = await sb.from('lotes_producidos').insert({
-      formula_id: formulaId, cantidad_panes: cantidad, fecha, nota: nota || null
+      producto_id: productoId, cantidad_panes: cantidad, fecha, nota: nota || null
     });
     if (error) { toast('Error: ' + error.message, true); return; }
     document.getElementById('lp-cantidad').value = '';
@@ -860,17 +854,17 @@
   };
 
   window.crearEntrega = async function() {
-    const formulaId = document.getElementById('en-formula').value;
+    const productoId = document.getElementById('en-producto').value;
     const clienteId = document.getElementById('en-cliente').value;
     const destinoLibre = document.getElementById('en-destino-libre').value.trim();
     const cantidad = parseInt(document.getElementById('en-cantidad').value, 10);
     const fecha = document.getElementById('en-fecha').value;
     const nota = document.getElementById('en-nota').value.trim();
-    if (!formulaId || !cantidad || !fecha || (!clienteId && !destinoLibre)) {
-      toast('Completa tipo de pan, cantidad, fecha, y cliente o destino libre', true); return;
+    if (!productoId || !cantidad || !fecha || (!clienteId && !destinoLibre)) {
+      toast('Completa producto, cantidad, fecha, y cliente o destino libre', true); return;
     }
     const { error } = await sb.from('entregas').insert({
-      formula_id: formulaId,
+      producto_id: productoId,
       cliente_id: clienteId || null,
       destino_libre: clienteId ? null : destinoLibre,
       cantidad, fecha, nota: nota || null
@@ -1187,6 +1181,7 @@
     if (error) { toast('Error cargando productos: ' + error.message, true); return; }
     PRODUCTOS = data || [];
     renderProductos();
+    poblarSelectsProducto();
   }
 
   function renderProductos() {
