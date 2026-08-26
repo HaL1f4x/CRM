@@ -210,7 +210,10 @@
 <div id="app">
   <header class="topbar">
     <h1>Trepando · Administrador</h1>
-    <span id="conn-status">conectando…</span>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span id="conn-status">conectando…</span>
+      <button id="btn-logout" style="background:none; border:1px solid #55453590; color:var(--masa); padding:6px 12px; border-radius:8px; font-size:12px; cursor:pointer;">Cerrar sesión</button>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -473,11 +476,14 @@
   window.sb = sb;
 
   // ---------- PIN ----------
+  const SESION_KEY = 'trepando_sesion';
+
   const pinForm = document.getElementById('pin-form');
   pinForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const val = document.getElementById('pin-input').value.trim();
     if (val === PIN_CORRECTO) {
+      localStorage.setItem(SESION_KEY, 'valida');
       document.getElementById('pin-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       initApp();
@@ -485,6 +491,13 @@
       document.getElementById('pin-error').textContent = 'PIN incorrecto, intenta de nuevo.';
       document.getElementById('pin-input').value = '';
     }
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    localStorage.removeItem(SESION_KEY);
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('pin-screen').style.display = 'flex';
+    document.getElementById('pin-input').value = '';
   });
 
   // ---------- Tabs ----------
@@ -1266,6 +1279,13 @@
     const d = document.createElement('div');
     d.textContent = str ?? '';
     return d.innerHTML;
+  }
+
+  // ---------- Sesión recordada ----------
+  if (localStorage.getItem(SESION_KEY)) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
   }
 </script>
 
