@@ -269,7 +269,7 @@
       <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Detalle de pedidos</h3>
       <table>
         <thead>
-          <tr><th>Fecha entrega</th><th>Hora</th><th>Cliente</th><th>Sede</th><th>Producto</th><th>Cantidad</th><th>Estado</th></tr>
+          <tr><th>Fecha entrega</th><th>Hora</th><th>Cliente</th><th>Sede</th><th>Producto</th><th>Cantidad</th><th>Estado</th><th>Entregado</th><th>Diferencia</th></tr>
         </thead>
         <tbody id="tbody-pedidos"></tbody>
       </table>
@@ -375,6 +375,7 @@
       <div class="row-form" style="flex-wrap:wrap;">
         <select class="mini" id="en-producto" style="min-width:180px;"><option value="">Producto…</option></select>
         <select class="mini" id="en-cliente" style="min-width:160px;"><option value="">Cliente…</option></select>
+        <select class="mini" id="en-pedido" style="min-width:220px;"><option value="">Ninguno / destino libre</option></select>
         <input type="text" class="mini" id="en-destino-libre" placeholder="o destino libre (ej. Mostrador Pizzamos)" style="min-width:200px; flex:1;">
         <input type="number" class="mini" id="en-cantidad" placeholder="Cantidad" style="width:110px;">
         <input type="date" class="mini" id="en-fecha" style="width:150px;">
@@ -520,6 +521,7 @@
   let CLIENTES = [], SEDES = [], CONTACTOS = [], CONTACTO_SEDE = [], PRODUCTOS = [], PEDIDOS = [];
   let LOTES_PRODUCIDOS = [], ENTREGAS = [];
   let CLIENTE_PRODUCTO = [];
+  let ENTREGADO_POR_PEDIDO = {};
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
 
@@ -604,8 +606,21 @@
       .order('fecha_entrega', { ascending: true });
     if (error) { toast('Error cargando pedidos: ' + error.message, true); return; }
     PEDIDOS = data || [];
+    await cargarEntregadoPorPedido();
     renderDashboard();
     poblarSelectPedidoForm();
+  }
+
+  async function cargarEntregadoPorPedido() {
+    ENTREGADO_POR_PEDIDO = {};
+    const pedidoIds = PEDIDOS.map(p => p.id);
+    if (!pedidoIds.length) return;
+    const { data, error } = await sb.from('entregas').select('pedido_id, cantidad').in('pedido_id', pedidoIds);
+    if (error) { toast('Error cargando entregas de pedidos: ' + error.message, true); return; }
+    (data || []).forEach(e => {
+      if (e.pedido_id == null) return;
+      ENTREGADO_POR_PEDIDO[e.pedido_id] = (ENTREGADO_POR_PEDIDO[e.pedido_id] || 0) + (e.cantidad || 0);
+    });
   }
 
   function renderDashboard() {
@@ -626,7 +641,18 @@
 
     const tbodyPedidos = document.getElementById('tbody-pedidos');
     tbodyPedidos.innerHTML = PEDIDOS.length
-      ? PEDIDOS.map(p => `
+      ? PEDIDOS.map(p => {
+          const entregado = ENTREGADO_POR_PEDIDO[p.id];
+          const entregadoTxt = entregado != null ? entregado.toLocaleString('es-CO') : '—';
+          let diferenciaTxt = '—';
+          let diferenciaStyle = '';
+          if (entregado != null) {
+            const diferencia = entregado - (p.cantidad || 0);
+            diferenciaTxt = (diferencia > 0 ? '+' : '') + diferencia.toLocaleString('es-CO');
+            if (diferencia > 0) diferenciaStyle = 'color:var(--costra-2); font-weight:600;';
+            else if (diferencia < 0) diferenciaStyle = 'color:var(--error); font-weight:600;';
+          }
+          return `
           <tr>
             <td>${p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short'}) : '—'}</td>
             <td>${esc(p.hora_entrega || '—')}</td>
@@ -641,8 +667,11 @@
               </select>
               <span class="pill ${p.estado === 'Entregado' ? 'on' : 'off'}" data-estado-pill="${p.id}" style="margin-left:6px;">${esc(p.estado || 'Pendiente')}</span>
             </td>
-          </tr>`).join('')
-      : '<tr><td colspan="7" class="empty">No hay pedidos con entrega en este rango de fechas.</td></tr>';
+            <td>${entregadoTxt}</td>
+            <td style="${diferenciaStyle}">${diferenciaTxt}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="9" class="empty">No hay pedidos con entrega en este rango de fechas.</td></tr>';
 
     tbodyPedidos.querySelectorAll('[data-estado-select]').forEach(sel => {
       sel.addEventListener('change', () => actualizarEstadoPedido(parseInt(sel.dataset.estadoSelect, 10), sel.value));
@@ -903,9 +932,40 @@
     cargarProduccion();
   };
 
+  document.getElementById('en-cliente').addEventListener('change', (e) => {
+    const clienteId = parseInt(e.target.value, 10);
+    poblarSelectPedidoRelacionado(clienteId);
+  });
+
+  async function poblarSelectPedidoRelacionado(clienteId) {
+    const selPedido = document.getElementById('en-pedido');
+    if (!clienteId) {
+      selPedido.innerHTML = '<option value="">Ninguno / destino libre</option>';
+      return;
+    }
+    const contactoIds = CONTACTOS.filter(k => k.cliente_id === clienteId).map(k => k.id);
+    if (!contactoIds.length) {
+      selPedido.innerHTML = '<option value="">Ninguno / destino libre</option>';
+      return;
+    }
+    const { data, error } = await sb.from('pedidos')
+      .select('id, fecha_entrega, cantidad, estado, contactos(nombre, clientes(nombre))')
+      .in('contacto_id', contactoIds)
+      .order('fecha_entrega', { ascending: true });
+    if (error) { toast('Error cargando pedidos del cliente: ' + error.message, true); return; }
+    const pendientes = (data || []).filter(p => p.estado !== 'Entregado');
+    const opciones = pendientes.map(p => {
+      const fecha = p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short'}) : '—';
+      const nombreCliente = p.contactos?.clientes?.nombre || '—';
+      return `<option value="${p.id}">${esc(fecha)} — ${esc(nombreCliente)} — ${p.cantidad} panes pedidos</option>`;
+    }).join('');
+    selPedido.innerHTML = '<option value="">Ninguno / destino libre</option>' + opciones;
+  }
+
   window.crearEntrega = async function() {
     const productoId = document.getElementById('en-producto').value;
     const clienteId = document.getElementById('en-cliente').value;
+    const pedidoId = document.getElementById('en-pedido').value;
     const destinoLibre = document.getElementById('en-destino-libre').value.trim();
     const cantidad = parseInt(document.getElementById('en-cantidad').value, 10);
     const fecha = document.getElementById('en-fecha').value;
@@ -917,9 +977,11 @@
       producto_id: productoId,
       cliente_id: clienteId || null,
       destino_libre: clienteId ? null : destinoLibre,
+      pedido_id: pedidoId || null,
       cantidad, fecha, nota: nota || null
     });
     if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('en-pedido').innerHTML = '<option value="">Ninguno / destino libre</option>';
     document.getElementById('en-cantidad').value = '';
     document.getElementById('en-fecha').value = '';
     document.getElementById('en-destino-libre').value = '';
