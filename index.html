@@ -1020,6 +1020,19 @@
         <li data-sede-li="${s.id}">
           <span data-sede-view="${s.id}">${esc(s.nombre)} <button class="link" data-sede-edit="${s.id}">Editar</button></span>
         </li>`).join('') || '<li style="color:var(--texto-suave)">Sin sedes aún</li>';
+
+      const productosCliente = CLIENTE_PRODUCTO.filter(cp => cp.cliente_id === c.id);
+      const productosList = productosCliente.map(cp => {
+        const prod = PRODUCTOS.find(p => p.id === cp.producto_id);
+        const sedeNombre = cp.sede_id ? (SEDES.find(s => s.id === cp.sede_id)?.nombre || '—') : 'Todas las sedes';
+        return `<li data-cp-li="${cp.id}">
+          ${esc(prod ? prod.nombre : 'Producto eliminado')} — ${esc(sedeNombre)}
+          <button class="link" data-cp-delete="${cp.id}">Quitar</button>
+        </li>`;
+      }).join('') || '<li style="color:var(--texto-suave)">Sin productos habilitados aún</li>';
+      const opcionesProductosCP = '<option value="">Producto…</option>' + PRODUCTOS.filter(p => p.activo !== false).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+      const opcionesSedesCP = '<option value="">Todas las sedes</option>' + sedesDeCliente.map(s => `<option value="${s.id}">${esc(s.nombre)}</option>`).join('');
+
       const subTd = document.createElement('td');
       subTd.colSpan = 5;
       subTd.innerHTML = `
@@ -1027,6 +1040,14 @@
         <div style="display:flex; gap:8px;">
           <input type="text" class="mini" style="width:200px" placeholder="Nombre de la sede nueva" id="sede-input-${c.id}">
           <button class="ghost" onclick="agregarSede(${c.id})">+ Agregar sede</button>
+        </div>
+        <div style="font-size:12px; font-weight:600; color:var(--texto-suave); margin:16px 0 6px;">Productos habilitados</div>
+        <ul style="margin:0 0 8px 16px; padding:0;">${productosList}</ul>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <select class="mini" id="cp-producto-${c.id}" style="min-width:160px;">${opcionesProductosCP}</select>
+          <input type="text" class="mini" style="width:180px" placeholder="o crea un producto nuevo" id="cp-producto-nuevo-${c.id}">
+          <select class="mini" id="cp-sede-${c.id}" style="min-width:140px;">${opcionesSedesCP}</select>
+          <button class="ghost" onclick="agregarClienteProducto(${c.id})">+ Asociar producto</button>
         </div>
       `;
       subTr.appendChild(subTd);
@@ -1044,6 +1065,11 @@
           span.querySelector('[data-sede-save]').addEventListener('click', () => guardarSede(s.id));
           span.querySelector('[data-sede-cancel]').addEventListener('click', () => cargarClientes());
         });
+      });
+
+      productosCliente.forEach(cp => {
+        const li = subTd.querySelector(`li[data-cp-li="${cp.id}"]`);
+        if (li) li.querySelector('[data-cp-delete]').addEventListener('click', () => quitarClienteProducto(cp.id));
       });
 
     });
@@ -1137,6 +1163,38 @@
     if (error) { toast('Error: ' + error.message, true); return; }
     input.value = '';
     toast('Sede agregada');
+    cargarClientes();
+  };
+
+  window.agregarClienteProducto = async function(clienteId) {
+    const selProducto = document.getElementById('cp-producto-' + clienteId);
+    const inputNuevo = document.getElementById('cp-producto-nuevo-' + clienteId);
+    const selSede = document.getElementById('cp-sede-' + clienteId);
+    const nombreNuevo = inputNuevo.value.trim();
+    const sedeId = selSede.value || null;
+    let productoId = selProducto.value;
+
+    if (nombreNuevo) {
+      const { data, error } = await sb.from('productos').insert({ nombre: nombreNuevo, categoria: 'Pan', formula_id: null }).select().single();
+      if (error) { toast('Error creando producto: ' + error.message, true); return; }
+      productoId = data.id;
+    }
+
+    if (!productoId) { toast('Elige un producto o escribe uno nuevo', true); return; }
+
+    const { error } = await sb.from('cliente_producto').insert({ cliente_id: clienteId, producto_id: productoId, sede_id: sedeId });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Producto asociado');
+    await cargarProductos();
+    await cargarClienteProducto();
+    cargarClientes();
+  };
+
+  window.quitarClienteProducto = async function(id) {
+    const { error } = await sb.from('cliente_producto').delete().eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Producto desasociado');
+    await cargarClienteProducto();
     cargarClientes();
   };
 
