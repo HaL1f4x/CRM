@@ -214,8 +214,8 @@
   </header>
 
   <nav class="tabs">
-    <button data-tab="inicio" class="active">Inicio</button>
-    <button data-tab="produccion">Producción</button>
+    <button data-tab="inicio" class="active">Pedidos</button>
+    <button data-tab="produccion">Control</button>
     <button data-tab="clientes">Clientes &amp; Sedes</button>
     <button data-tab="contactos">Contactos</button>
     <button data-tab="productos">Productos</button>
@@ -227,7 +227,7 @@
     <section id="panel-inicio" class="panel active">
       <div class="panel-head">
         <div>
-          <h2>Pedidos por entregar</h2>
+          <h2>Resumen de Pedidos</h2>
           <p>Resumen de pedidos y panes a producir según la fecha de entrega.</p>
         </div>
       </div>
@@ -282,8 +282,13 @@
         <select class="mini" id="np-sede" style="min-width:140px;"><option value="">Sede…</option></select>
         <select class="mini" id="np-producto" style="min-width:160px;"><option value="">Producto…</option></select>
         <input type="number" class="mini" id="np-cantidad" placeholder="Cantidad" style="width:100px;">
-        <input type="date" class="mini" id="np-fecha" style="width:150px;">
-        <input type="time" class="mini" id="np-hora" style="width:110px;">
+        <span style="display:flex; flex-direction:column; gap:3px;">
+          <label for="np-fecha" style="font-size:11px; color:var(--texto-suave);">Fecha y hora de entrega</label>
+          <span style="display:flex; gap:6px;">
+            <input type="date" class="mini" id="np-fecha" style="width:150px;">
+            <input type="time" class="mini" id="np-hora" style="width:110px;">
+          </span>
+        </span>
         <button class="primary" onclick="crearPedido()">+ Agregar pedido</button>
       </div>
       <p style="font-size:12px; color:var(--texto-suave);">Si un cliente no aparece con contactos o sedes en las listas, primero agrégaselos en la pestaña "Clientes &amp; Sedes" / "Contactos".</p>
@@ -312,14 +317,14 @@
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
         <div>
-          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Producción por producto (período)</h3>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Producción</h3>
           <table>
             <thead><tr><th>Producto</th><th>Cantidad producida</th></tr></thead>
             <tbody id="tbody-produccion-tipo"></tbody>
           </table>
         </div>
         <div>
-          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Entregas por producto y destino (período)</h3>
+          <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Entrega</h3>
           <table>
             <thead><tr><th>Producto</th><th>Destino</th><th>Cantidad</th></tr></thead>
             <tbody id="tbody-entregas-detalle"></tbody>
@@ -327,9 +332,10 @@
         </div>
       </div>
 
-      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Inventario pendiente (histórico total — no depende del rango de fechas de arriba)</h3>
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:2px;">Inventario</h3>
+      <p style="font-size:12px; color:var(--texto-suave); margin:0 0 10px;">Resumen</p>
       <table style="margin-bottom:28px;">
-        <thead><tr><th>Producto</th><th>Producido total</th><th>Entregado total</th><th>Pendiente</th></tr></thead>
+        <thead><tr><th>Producto</th><th>Producido total</th><th>Entregado total</th><th>Existencias</th></tr></thead>
         <tbody id="tbody-inventario"></tbody>
       </table>
 
@@ -508,6 +514,10 @@
     document.getElementById('conn-status').textContent = 'cargando datos…';
     setRangoSemanaActual();
     setRangoProdSemanaActual();
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    document.getElementById('lp-fecha').value = toISODate(hoy);
+    document.getElementById('en-fecha').value = toISODate(hoy);
     await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarClienteProducto()]);
     await Promise.all([cargarPedidos(), cargarProduccion()]);
     document.getElementById('conn-status').textContent = 'conectado';
@@ -611,9 +621,32 @@
             <td>${esc(p.sedes?.nombre || '—')}</td>
             <td>${esc(p.productos?.nombre || '—')}</td>
             <td>${p.cantidad}</td>
-            <td><span class="pill ${p.estado === 'Entregado' ? 'on' : 'off'}">${esc(p.estado || 'Pendiente')}</span></td>
+            <td style="white-space:nowrap;">
+              <select data-estado-select="${p.id}" style="width:auto; padding:5px 6px; font-size:12px; border:1px solid var(--linea); border-radius:6px; background:white; color:var(--texto);">
+                <option value="Pendiente" ${p.estado !== 'Entregado' ? 'selected' : ''}>Pendiente</option>
+                <option value="Entregado" ${p.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+              </select>
+              <span class="pill ${p.estado === 'Entregado' ? 'on' : 'off'}" data-estado-pill="${p.id}" style="margin-left:6px;">${esc(p.estado || 'Pendiente')}</span>
+            </td>
           </tr>`).join('')
       : '<tr><td colspan="7" class="empty">No hay pedidos con entrega en este rango de fechas.</td></tr>';
+
+    tbodyPedidos.querySelectorAll('[data-estado-select]').forEach(sel => {
+      sel.addEventListener('change', () => actualizarEstadoPedido(parseInt(sel.dataset.estadoSelect, 10), sel.value));
+    });
+  }
+
+  async function actualizarEstadoPedido(id, estado) {
+    const pill = document.querySelector(`[data-estado-pill="${id}"]`);
+    if (pill) {
+      pill.textContent = estado;
+      pill.className = 'pill ' + (estado === 'Entregado' ? 'on' : 'off');
+    }
+    const { error } = await sb.from('pedidos').update({ estado }).eq('id', id);
+    if (error) { toast('Error actualizando estado: ' + error.message, true); return; }
+    const p = PEDIDOS.find(x => x.id === id);
+    if (p) p.estado = estado;
+    toast('Estado actualizado');
   }
 
   function poblarSelectPedidoForm() {
@@ -652,6 +685,10 @@
       cantidad, fecha_entrega: fecha, hora_entrega: hora || null
     });
     if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('np-cliente').value = '';
+    document.getElementById('np-contacto').innerHTML = '<option value="">Contacto…</option>';
+    document.getElementById('np-sede').innerHTML = '<option value="">Sede…</option>';
+    document.getElementById('np-producto').innerHTML = '<option value="">Producto…</option>';
     document.getElementById('np-cantidad').value = '';
     document.getElementById('np-fecha').value = '';
     document.getElementById('np-hora').value = '';
