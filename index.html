@@ -222,6 +222,7 @@
     <button data-tab="clientes">Clientes &amp; Sedes</button>
     <button data-tab="contactos">Contactos</button>
     <button data-tab="productos">Productos</button>
+    <button data-tab="potenciales">Clientes potenciales</button>
   </nav>
 
   <main>
@@ -458,6 +459,40 @@
       </div>
     </section>
 
+    <!-- CLIENTES POTENCIALES -->
+    <section id="panel-potenciales" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Clientes potenciales</h2>
+          <p>Leads capturados por el bot de WhatsApp. Los campos de seguimiento se editan directo en la tabla.</p>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Teléfono</th>
+              <th>Nombre</th>
+              <th>Nombre local</th>
+              <th>Canal origen</th>
+              <th>Tipo de negocio</th>
+              <th>Ciudad</th>
+              <th>Volumen estimado</th>
+              <th>Tipo de agenda</th>
+              <th>Horario preferencia</th>
+              <th>Estado</th>
+              <th>Último contacto</th>
+              <th>Notas</th>
+              <th>Resultado final</th>
+              <th>Creado</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-potenciales"></tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -522,6 +557,7 @@
   let LOTES_PRODUCIDOS = [], ENTREGAS = [];
   let CLIENTE_PRODUCTO = [];
   let ENTREGADO_POR_PEDIDO = {};
+  let CLIENTES_POTENCIALES = [];
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
 
@@ -533,7 +569,7 @@
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
     document.getElementById('en-fecha').value = toISODate(hoy);
-    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarClienteProducto()]);
+    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarClienteProducto(), cargarClientesPotenciales()]);
     await Promise.all([cargarPedidos(), cargarProduccion()]);
     document.getElementById('conn-status').textContent = 'conectado';
   }
@@ -1389,6 +1425,51 @@
     toast('Producto agregado');
     cargarProductos();
   };
+
+  // ---------- CLIENTES POTENCIALES ----------
+  async function cargarClientesPotenciales() {
+    const { data, error } = await sb.from('clientes_potenciales').select('*').order('created_at', { ascending: false });
+    if (error) { toast('Error cargando clientes potenciales: ' + error.message, true); return; }
+    CLIENTES_POTENCIALES = data || [];
+    renderClientesPotenciales();
+  }
+
+  function renderClientesPotenciales() {
+    const tbody = document.getElementById('tbody-potenciales');
+    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="14" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
+    tbody.innerHTML = CLIENTES_POTENCIALES.map(cp => `
+      <tr>
+        <td>${esc(cp.telefono || '—')}</td>
+        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="nombre" value="${escAttr(cp.nombre || '')}" style="min-width:140px;"></td>
+        <td>${esc(cp.nombre_local || '—')}</td>
+        <td>${esc(cp.canal_origen || '—')}</td>
+        <td>${esc(cp.tipo_negocio || '—')}</td>
+        <td>${esc(cp.ciudad || '—')}</td>
+        <td>${esc(cp.volumen_estimado || '—')}</td>
+        <td>${esc(cp.tipo_agenda || '—')}</td>
+        <td>${esc(cp.horario_preferencia || '—')}</td>
+        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="estado" value="${escAttr(cp.estado || '')}" style="min-width:110px;"></td>
+        <td><input type="date" class="mini" data-cp-id="${cp.id}" data-cp-field="fecha_ultimo_contacto" value="${cp.fecha_ultimo_contacto || ''}" style="min-width:140px;"></td>
+        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="notas" value="${escAttr(cp.notas || '')}" style="min-width:180px;"></td>
+        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="resultado_final" value="${escAttr(cp.resultado_final || '')}" style="min-width:140px;"></td>
+        <td>${cp.created_at ? new Date(cp.created_at).toLocaleString('es-CO', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'}</td>
+      </tr>`).join('');
+
+    tbody.querySelectorAll('[data-cp-field]').forEach(input => {
+      input.addEventListener('change', () => guardarCampoPotencial(input));
+    });
+  }
+
+  async function guardarCampoPotencial(input) {
+    const id = input.dataset.cpId;
+    const field = input.dataset.cpField;
+    const value = input.value.trim() === '' ? null : input.value;
+    const { error } = await sb.from('clientes_potenciales').update({ [field]: value }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    const cp = CLIENTES_POTENCIALES.find(x => String(x.id) === String(id));
+    if (cp) cp[field] = value;
+    toast('Cambio guardado');
+  }
 
   // Cargar contactos cuando se abre esa pestaña la primera vez
   document.querySelector('[data-tab="contactos"]').addEventListener('click', () => {
