@@ -43,11 +43,27 @@
     --costra: #F4A20C;
     --costra-2: #C67F0A;
     --ajonjoli: #F7C15C;
+
+    /* Escala de grises neutros (fría, no derivada del naranja) — bordes sutiles, texto secundario, fondos de tarjetas */
+    --gray-100: #F4F5F7;
+    --gray-200: #E4E6EA;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+
     --texto: #1A1A1A;
-    --texto-suave: #6E6053;
-    --linea: #EADFC7;
+    --texto-suave: var(--gray-500);
+    --linea: var(--gray-200);
+
     --ok: #5C7A4A;
     --error: #A6432F;
+
+    /* Elevación y radios consistentes */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-full: 999px;
   }
   * { box-sizing: border-box; }
   body {
@@ -135,28 +151,32 @@
 
   nav.tabs {
     display: flex;
-    gap: 4px;
-    padding: 14px 28px 0;
+    gap: 8px;
+    padding: 16px 28px 0;
     background: var(--masa);
     border-bottom: 1px solid var(--linea);
   }
   nav.tabs button {
     background: none;
     border: none;
-    padding: 10px 16px;
+    padding: 12px 16px;
     font-size: 14px;
     font-weight: 600;
     color: var(--texto-suave);
     cursor: pointer;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
   }
+  nav.tabs button:hover { color: var(--texto); background: rgba(0,0,0,0.03); }
   nav.tabs button.active {
     color: var(--costra-2);
     border-bottom: 2px solid var(--costra);
   }
+  nav.tabs button:focus-visible { outline: 2px solid var(--costra); outline-offset: -2px; }
 
-  main { padding: 28px; max-width: 1100px; margin: 0 auto; }
+  main { padding: 32px 28px 28px; max-width: 1100px; margin: 0 auto; }
   .panel { display: none; }
   .panel.active { display: block; }
 
@@ -171,39 +191,67 @@
     color: white;
     border: none;
     padding: 10px 18px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
+    transition: background-color 150ms ease, transform 150ms ease;
   }
   button.primary:hover { background: var(--costra-2); }
+  button.primary:active { transform: translateY(1px); }
+  button.primary:focus-visible { outline: 2px solid var(--costra); outline-offset: 2px; }
   button.ghost {
     background: none;
-    border: 1px solid var(--linea);
+    border: 1px solid var(--gray-300);
     color: var(--texto);
     padding: 8px 14px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
   }
-  button.ghost:hover { border-color: var(--costra); color: var(--costra-2); }
+  button.ghost:hover { border-color: var(--costra); color: var(--costra-2); background: rgba(244,162,12,0.06); }
+  button.ghost:active { transform: translateY(1px); }
+  button.ghost:focus-visible { outline: 2px solid var(--costra); outline-offset: 2px; }
   button.link {
     background: none; border: none; color: var(--costra-2); cursor: pointer; font-size: 12px; padding: 4px 0; text-decoration: underline;
+    transition: color 150ms ease;
+  }
+  button.link:focus-visible { outline: 2px solid var(--costra); outline-offset: 2px; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--texto-suave); padding: 12px 16px; background: var(--gray-100); border-bottom: 1px solid var(--linea); }
+  td { padding: 14px 16px; border-bottom: 1px solid var(--linea); font-size: 14px; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr.subrow td { background: var(--masa); padding: 10px 14px 10px 34px; font-size: 13px; color: var(--texto-suave); }
+
+  /* Alineación a la derecha de columnas numéricas (Cantidad, Entregado, Diferencia, totales) */
+  table:has(#tbody-resumen-productos) td:nth-child(2), table:has(#tbody-resumen-productos) th:nth-child(2),
+  table:has(#tbody-pedidos) td:nth-child(6), table:has(#tbody-pedidos) th:nth-child(6),
+  table:has(#tbody-pedidos) td:nth-child(8), table:has(#tbody-pedidos) th:nth-child(8),
+  table:has(#tbody-pedidos) td:nth-child(9), table:has(#tbody-pedidos) th:nth-child(9),
+  table:has(#tbody-produccion-tipo) td:nth-child(2), table:has(#tbody-produccion-tipo) th:nth-child(2),
+  table:has(#tbody-entregas-detalle) td:nth-child(3), table:has(#tbody-entregas-detalle) th:nth-child(3),
+  table:has(#tbody-inventario) td:nth-child(2), table:has(#tbody-inventario) th:nth-child(2),
+  table:has(#tbody-inventario) td:nth-child(3), table:has(#tbody-inventario) th:nth-child(3),
+  table:has(#tbody-inventario) td:nth-child(4), table:has(#tbody-inventario) th:nth-child(4),
+  table:has(#tbody-historial) td:nth-child(2), table:has(#tbody-historial) th:nth-child(2),
+  table:has(#tbody-historial) td:nth-child(3), table:has(#tbody-historial) th:nth-child(3),
+  table:has(#tbody-historial) td:nth-child(4), table:has(#tbody-historial) th:nth-child(4) {
+    text-align: right;
   }
 
-  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(43,33,26,0.08); }
-  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--texto-suave); padding: 12px 14px; background: var(--masa-2); border-bottom: 1px solid var(--linea); }
-  td { padding: 12px 14px; border-bottom: 1px solid var(--linea); font-size: 14px; vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  tr.subrow td { background: #FFFCF7; padding: 10px 14px 10px 34px; font-size: 13px; color: var(--texto-suave); }
-
-  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; }
   .pill.on { background: #E7EFE2; color: var(--ok); }
   .pill.off { background: #F3E4DF; color: var(--error); }
 
-  .row-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px; background: var(--masa-2); border-radius: 12px; margin-bottom: 14px; }
-  .row-form input, .row-form select {
-    padding: 9px 12px; border: 1px solid var(--linea); border-radius: 7px; font-size: 13px; background: white; color: var(--texto);
+  .row-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px; background: var(--masa-2); border-radius: var(--radius-md); margin-bottom: 14px; }
+  .row-form input, .row-form select, select.mini, input.mini {
+    padding: 9px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); font-size: 13px; background: white; color: var(--texto); font-family: inherit;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .row-form input:focus, .row-form select:focus, select.mini:focus, input.mini:focus {
+    outline: none; border-color: var(--costra); box-shadow: 0 0 0 3px rgba(244,162,12,0.15);
   }
   .row-form input[type="text"], .row-form input[type="tel"] { flex: 1; min-width: 140px; }
 
@@ -216,7 +264,7 @@
   .toast.show { opacity: 1; }
   .toast.error { background: var(--error); }
 
-  select.mini, input.mini { width: 100%; padding: 6px 8px; font-size: 13px; border: 1px solid var(--linea); border-radius: 6px; }
+  select.mini, input.mini { width: 100%; }
 </style>
 </head>
 <body>
@@ -239,7 +287,7 @@
     <h1>Trepando · Administrador</h1>
     <div style="display:flex; align-items:center; gap:14px;">
       <span id="conn-status">conectando…</span>
-      <button id="btn-logout" style="background:none; border:1px solid #55453590; color:var(--masa); padding:6px 12px; border-radius:8px; font-size:12px; cursor:pointer;">Cerrar sesión</button>
+      <button id="btn-logout" style="background:none; border:1px solid #55453590; color:var(--masa); padding:6px 12px; border-radius:var(--radius-sm); font-size:12px; cursor:pointer; transition:border-color 150ms ease, background-color 150ms ease;">Cerrar sesión</button>
     </div>
   </header>
 
@@ -285,11 +333,11 @@
         </div>
         <div>
           <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Totales del período</h3>
-          <div style="background:white; border-radius:12px; padding:20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-            <div style="font-size:36px; font-family:'Playfair Display',serif; color:var(--costra-2);" id="total-panes">0</div>
-            <div style="font-size:13px; color:var(--texto-suave); margin-bottom:14px;">panes en total</div>
-            <div style="font-size:22px; font-family:'Playfair Display',serif;" id="total-pedidos">0</div>
-            <div style="font-size:13px; color:var(--texto-suave);">pedidos en el período</div>
+          <div style="background:white; border-radius:var(--radius-md); padding:28px 24px; box-shadow:var(--shadow-sm);">
+            <div style="font-size:40px; font-weight:800; line-height:1; color:var(--costra-2);" id="total-panes">0</div>
+            <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--texto-suave); margin:6px 0 20px;">panes en total</div>
+            <div style="font-size:24px; font-weight:800; line-height:1; color:var(--texto);" id="total-pedidos">0</div>
+            <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--texto-suave); margin-top:6px;">pedidos en el período</div>
           </div>
         </div>
       </div>
