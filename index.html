@@ -1482,16 +1482,47 @@
     tbody.innerHTML = '';
     PRODUCTOS.forEach(p => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${esc(p.nombre)}</strong></td>
-        <td>${esc(p.categoria)}</td>
-        <td>${esc(p.formulas ? p.formulas.nombre : '— sin receta —')}</td>
-        <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
-        <td><button class="ghost" data-toggle-prod="${p.id}">${p.activo === false ? 'Activar' : 'Desactivar'}</button></td>
-      `;
+      pintarFilaProducto(tr, p);
       tbody.appendChild(tr);
-      tr.querySelector('[data-toggle-prod]').addEventListener('click', () => toggleProducto(p.id, p.activo === false));
     });
+  }
+
+  function pintarFilaProducto(tr, p) {
+    tr.innerHTML = `
+      <td><button class="link" data-edit-p="${p.id}">Editar</button> &nbsp;<strong>${esc(p.nombre)}</strong></td>
+      <td>${esc(p.categoria)}</td>
+      <td>${esc(p.formulas ? p.formulas.nombre : '— sin receta —')}</td>
+      <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      <td><button class="ghost" data-toggle-prod="${p.id}">${p.activo === false ? 'Activar' : 'Desactivar'}</button></td>
+    `;
+    tr.querySelector('[data-edit-p]').addEventListener('click', () => pintarFilaProductoEdicion(tr, p));
+    tr.querySelector('[data-toggle-prod]').addEventListener('click', () => toggleProducto(p.id, p.activo === false));
+  }
+
+  function pintarFilaProductoEdicion(tr, p) {
+    tr.innerHTML = `
+      <td><input type="text" class="mini" id="edp-nombre-${p.id}" value="${escAttr(p.nombre)}"></td>
+      <td><input type="text" class="mini" id="edp-categoria-${p.id}" value="${escAttr(p.categoria || '')}"></td>
+      <td>${esc(p.formulas ? p.formulas.nombre : '— sin receta —')}</td>
+      <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="link" data-save-p="${p.id}">Guardar</button>
+        &nbsp;·&nbsp;
+        <button class="link" data-cancel-p="${p.id}">Cancelar</button>
+      </td>
+    `;
+    tr.querySelector('[data-save-p]').addEventListener('click', () => guardarProducto(p.id));
+    tr.querySelector('[data-cancel-p]').addEventListener('click', () => { pintarFilaProducto(tr, p); });
+  }
+
+  async function guardarProducto(id) {
+    const nombre = document.getElementById('edp-nombre-' + id).value.trim();
+    const categoria = document.getElementById('edp-categoria-' + id).value.trim();
+    if (!nombre) { toast('El nombre no puede quedar vacío', true); return; }
+    const { error } = await sb.from('productos').update({ nombre, categoria }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Producto actualizado');
+    cargarProductos();
   }
 
   async function toggleProducto(id, activar) {
