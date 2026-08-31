@@ -4,10 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trepando — Panel de administrador</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  @font-face {
+    font-family: 'Aileron';
+    src: url('fonts/Aileron-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Aileron';
+    src: url('fonts/Aileron-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Aileron';
+    src: url('fonts/Aileron-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Aileron';
+    src: url('fonts/Aileron-Heavy.woff') format('woff');
+    font-weight: 800;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Aileron';
+    src: url('fonts/Aileron-Black.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+  }
   :root {
     --masa: #FCF7F0;
     --masa-2: #F5EAD4;
@@ -25,12 +52,12 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     background: var(--masa);
     color: var(--texto);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; margin: 0; }
+  h1, h2, h3 { font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-weight: 800; margin: 0; }
 
   /* --- Pantalla de PIN --- */
   #pin-screen {
