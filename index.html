@@ -546,6 +546,11 @@
     });
   });
 
+  // Recargar pedidos cada vez que se entra a la pestaña "Pedidos", para reflejar cambios hechos en otras pestañas
+  document.querySelector('[data-tab="inicio"]').addEventListener('click', () => {
+    cargarPedidos();
+  });
+
   function toast(msg, isError=false) {
     const t = document.getElementById('toast');
     t.textContent = msg;
