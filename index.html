@@ -569,7 +569,9 @@
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
     document.getElementById('en-fecha').value = toISODate(hoy);
-    await Promise.all([cargarClientes(), cargarProductos(), cargarContactos(), cargarClienteProducto(), cargarClientesPotenciales()]);
+    await Promise.all([cargarProductos(), cargarClienteProducto(), cargarClientesPotenciales()]);
+    await cargarClientes();
+    await cargarContactos();
     await Promise.all([cargarPedidos(), cargarProduccion()]);
     document.getElementById('conn-status').textContent = 'conectado';
   }
@@ -1017,11 +1019,15 @@
       cantidad, fecha, nota: nota || null
     });
     if (error) { toast('Error: ' + error.message, true); return; }
-    document.getElementById('en-pedido').innerHTML = '<option value="">Ninguno / destino libre</option>';
+    if (pedidoId) {
+      const { error: errorPedido } = await sb.from('pedidos').update({ estado: 'Entregado' }).eq('id', pedidoId);
+      if (errorPedido) { toast('La entrega se registró, pero no se pudo actualizar el estado del pedido: ' + errorPedido.message, true); }
+    }
     document.getElementById('en-cantidad').value = '';
     document.getElementById('en-fecha').value = '';
     document.getElementById('en-destino-libre').value = '';
     document.getElementById('en-nota').value = '';
+    await poblarSelectPedidoRelacionado(clienteId ? parseInt(clienteId, 10) : null);
     toast('Entrega registrada');
     cargarProduccion();
   };
