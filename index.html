@@ -237,7 +237,10 @@
   table:has(#tbody-inventario) td:nth-child(4), table:has(#tbody-inventario) th:nth-child(4),
   table:has(#tbody-historial) td:nth-child(2), table:has(#tbody-historial) th:nth-child(2),
   table:has(#tbody-historial) td:nth-child(3), table:has(#tbody-historial) th:nth-child(3),
-  table:has(#tbody-historial) td:nth-child(4), table:has(#tbody-historial) th:nth-child(4) {
+  table:has(#tbody-historial) td:nth-child(4), table:has(#tbody-historial) th:nth-child(4),
+  table:has(#tbody-asistencia-horas) td:nth-child(2), table:has(#tbody-asistencia-horas) th:nth-child(2),
+  table:has(#tbody-asistencia-horas) td:nth-child(3), table:has(#tbody-asistencia-horas) th:nth-child(3),
+  table:has(#tbody-asistencia-horas) td:nth-child(4), table:has(#tbody-asistencia-horas) th:nth-child(4) {
     text-align: right;
   }
 
@@ -298,6 +301,7 @@
     <button data-tab="contactos">Contactos</button>
     <button data-tab="productos">Productos</button>
     <button data-tab="potenciales">Clientes potenciales</button>
+    <button data-tab="asistencia">Asistencia</button>
   </nav>
 
   <main>
@@ -568,6 +572,45 @@
       </div>
     </section>
 
+    <!-- ASISTENCIA -->
+    <section id="panel-asistencia" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Asistencia</h2>
+          <p>Marcaciones de entrada y salida del equipo, por ubicación y rango de fechas.</p>
+        </div>
+      </div>
+
+      <div class="row-form" style="align-items:center;">
+        <button class="ghost" id="btn-asist-rango-mes">Este mes</button>
+        <button class="ghost" id="btn-asist-rango-custom">Elegir fechas</button>
+        <span id="asist-rango-custom-inputs" style="display:none; gap:8px; align-items:center;">
+          <input type="date" class="mini" id="asist-rango-desde" style="width:150px">
+          <span style="color:var(--texto-suave); font-size:13px;">hasta</span>
+          <input type="date" class="mini" id="asist-rango-hasta" style="width:150px">
+          <button class="primary" id="btn-asist-aplicar-rango">Aplicar</button>
+        </span>
+        <select class="mini" id="asist-filtro-ubicacion" style="min-width:140px;">
+          <option value="">Todas las ubicaciones</option>
+          <option value="Trepando">Trepando</option>
+          <option value="Pizzamos">Pizzamos</option>
+        </select>
+        <span id="asist-rango-label" style="margin-left:auto; font-size:13px; color:var(--texto-suave);"></span>
+      </div>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Horas trabajadas por empleado</h3>
+      <table style="margin-bottom:28px;">
+        <thead><tr><th>Empleado</th><th>Horas Trepando</th><th>Horas Pizzamos</th><th>Total</th><th>Estado</th></tr></thead>
+        <tbody id="tbody-asistencia-horas"></tbody>
+      </table>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Detalle de marcaciones</h3>
+      <table>
+        <thead><tr><th>Empleado</th><th>Ubicación</th><th>Tipo</th><th>Fecha y hora</th><th>Verificada</th></tr></thead>
+        <tbody id="tbody-asistencia-detalle"></tbody>
+      </table>
+    </section>
+
   </main>
 </div>
 
@@ -638,13 +681,16 @@
   let CLIENTE_PRODUCTO = [];
   let ENTREGADO_POR_PEDIDO = {};
   let CLIENTES_POTENCIALES = [];
+  let ASISTENCIA = [];
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
+  let rangoAsistDesde, rangoAsistHasta;
 
   async function initApp() {
     document.getElementById('conn-status').textContent = 'cargando datos…';
     setRangoSemanaActual();
     setRangoProdSemanaActual();
+    setRangoAsistMesActual();
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
@@ -652,7 +698,7 @@
     await Promise.all([cargarProductos(), cargarClienteProducto(), cargarClientesPotenciales()]);
     await cargarClientes();
     await cargarContactos();
-    await Promise.all([cargarPedidos(), cargarProduccion()]);
+    await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia()]);
     document.getElementById('conn-status').textContent = 'conectado';
   }
 
@@ -1586,6 +1632,137 @@
     const cp = CLIENTES_POTENCIALES.find(x => String(x.id) === String(id));
     if (cp) cp[field] = value;
     toast('Cambio guardado');
+  }
+
+  // ---------- ASISTENCIA ----------
+  function primerDiaDelMes(d) {
+    const date = new Date(d.getFullYear(), d.getMonth(), 1);
+    date.setHours(0,0,0,0);
+    return date;
+  }
+  function ultimoDiaDelMes(d) {
+    const date = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    date.setHours(0,0,0,0);
+    return date;
+  }
+  function diaSiguiente(d) {
+    const date = new Date(d);
+    date.setDate(date.getDate() + 1);
+    return date;
+  }
+
+  function setRangoAsistMesActual() {
+    const hoy = new Date();
+    rangoAsistDesde = primerDiaDelMes(hoy);
+    rangoAsistHasta = ultimoDiaDelMes(hoy);
+    actualizarLabelRangoAsist();
+  }
+
+  function actualizarLabelRangoAsist() {
+    document.getElementById('asist-rango-label').textContent =
+      `${fechaLegible(rangoAsistDesde)} — ${fechaLegible(rangoAsistHasta)}`;
+  }
+
+  document.getElementById('btn-asist-rango-mes').addEventListener('click', () => {
+    setRangoAsistMesActual();
+    document.getElementById('asist-rango-custom-inputs').style.display = 'none';
+    cargarAsistencia();
+  });
+  document.getElementById('btn-asist-rango-custom').addEventListener('click', () => {
+    document.getElementById('asist-rango-custom-inputs').style.display = 'inline-flex';
+    document.getElementById('asist-rango-desde').value = toISODate(rangoAsistDesde);
+    document.getElementById('asist-rango-hasta').value = toISODate(rangoAsistHasta);
+  });
+  document.getElementById('btn-asist-aplicar-rango').addEventListener('click', () => {
+    const d = document.getElementById('asist-rango-desde').value;
+    const h = document.getElementById('asist-rango-hasta').value;
+    if (!d || !h) { toast('Selecciona ambas fechas', true); return; }
+    rangoAsistDesde = new Date(d + 'T00:00:00');
+    rangoAsistHasta = new Date(h + 'T00:00:00');
+    actualizarLabelRangoAsist();
+    cargarAsistencia();
+  });
+  document.getElementById('asist-filtro-ubicacion').addEventListener('change', () => {
+    cargarAsistencia();
+  });
+
+  async function cargarAsistencia() {
+    const ubicacion = document.getElementById('asist-filtro-ubicacion').value;
+    let query = sb.from('asistencia')
+      .select('*, empleados(nombre)')
+      .gte('timestamp', toISODate(rangoAsistDesde))
+      .lt('timestamp', toISODate(diaSiguiente(rangoAsistHasta)))
+      .order('timestamp', { ascending: true });
+    if (ubicacion) query = query.eq('ubicacion', ubicacion);
+    const { data, error } = await query;
+    if (error) { toast('Error cargando asistencia: ' + error.message, true); return; }
+    ASISTENCIA = data || [];
+    renderAsistenciaDetalle();
+    renderAsistenciaHoras();
+  }
+
+  function renderAsistenciaDetalle() {
+    const tbody = document.getElementById('tbody-asistencia-detalle');
+    const filas = [...ASISTENCIA].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    tbody.innerHTML = filas.length
+      ? filas.map(a => `
+          <tr>
+            <td>${esc(a.empleados ? a.empleados.nombre : '—')}</td>
+            <td>${esc(a.ubicacion || '—')}</td>
+            <td>${esc(a.tipo || '—')}</td>
+            <td>${a.timestamp ? new Date(a.timestamp).toLocaleString('es-CO', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'}</td>
+            <td><span class="pill ${a.ubicacion_verificada ? 'on' : 'off'}">${a.ubicacion_verificada ? 'Verificada' : 'No verificada'}</span></td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" class="empty">Sin marcaciones en este período</td></tr>';
+  }
+
+  function calcularHorasEmpleado(marcas) {
+    let horasTrepando = 0, horasPizzamos = 0, turnoAbierto = false;
+    let i = 0;
+    while (i < marcas.length) {
+      const m = marcas[i];
+      if (m.tipo === 'Entrada') {
+        const siguiente = marcas[i + 1];
+        if (siguiente && siguiente.tipo === 'Salida') {
+          const horas = (new Date(siguiente.timestamp) - new Date(m.timestamp)) / 3600000;
+          if (m.ubicacion === 'Trepando') horasTrepando += horas;
+          else if (m.ubicacion === 'Pizzamos') horasPizzamos += horas;
+          i += 2;
+          continue;
+        } else if (i === marcas.length - 1) {
+          turnoAbierto = true;
+        }
+      }
+      i += 1;
+    }
+    return { horasTrepando, horasPizzamos, total: horasTrepando + horasPizzamos, turnoAbierto };
+  }
+
+  function renderAsistenciaHoras() {
+    const porEmpleado = {};
+    ASISTENCIA.forEach(a => {
+      const id = a.empleado_id;
+      if (!porEmpleado[id]) porEmpleado[id] = { nombre: a.empleados ? a.empleados.nombre : '—', marcas: [] };
+      porEmpleado[id].marcas.push(a);
+    });
+
+    const filas = Object.values(porEmpleado).map(emp => {
+      emp.marcas.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const { horasTrepando, horasPizzamos, total, turnoAbierto } = calcularHorasEmpleado(emp.marcas);
+      return { nombre: emp.nombre, horasTrepando, horasPizzamos, total, turnoAbierto };
+    }).sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    const tbody = document.getElementById('tbody-asistencia-horas');
+    tbody.innerHTML = filas.length
+      ? filas.map(f => `
+          <tr>
+            <td>${esc(f.nombre)}</td>
+            <td>${f.horasTrepando.toFixed(1)} h</td>
+            <td>${f.horasPizzamos.toFixed(1)} h</td>
+            <td><strong>${f.total.toFixed(1)} h</strong></td>
+            <td><span class="pill ${f.turnoAbierto ? 'off' : 'on'}">${f.turnoAbierto ? 'Turno abierto' : 'Completo'}</span></td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" class="empty">Sin marcaciones en este período</td></tr>';
   }
 
   // Cargar contactos cuando se abre esa pestaña la primera vez
