@@ -240,7 +240,11 @@
   table:has(#tbody-historial) td:nth-child(4), table:has(#tbody-historial) th:nth-child(4),
   table:has(#tbody-asistencia-horas) td:nth-child(2), table:has(#tbody-asistencia-horas) th:nth-child(2),
   table:has(#tbody-asistencia-horas) td:nth-child(3), table:has(#tbody-asistencia-horas) th:nth-child(3),
-  table:has(#tbody-asistencia-horas) td:nth-child(4), table:has(#tbody-asistencia-horas) th:nth-child(4) {
+  table:has(#tbody-asistencia-horas) td:nth-child(4), table:has(#tbody-asistencia-horas) th:nth-child(4),
+  table:has(#tbody-concentracion) td:nth-child(2), table:has(#tbody-concentracion) th:nth-child(2),
+  table:has(#tbody-concentracion) td:nth-child(3), table:has(#tbody-concentracion) th:nth-child(3),
+  table:has(#tbody-concentracion) td:nth-child(4), table:has(#tbody-concentracion) th:nth-child(4),
+  table:has(#tbody-concentracion) td:nth-child(5), table:has(#tbody-concentracion) th:nth-child(5) {
     text-align: right;
   }
 
@@ -269,6 +273,7 @@
 
   select.mini, input.mini { width: 100%; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -302,6 +307,7 @@
     <button data-tab="productos">Productos</button>
     <button data-tab="potenciales">Clientes potenciales</button>
     <button data-tab="asistencia">Asistencia</button>
+    <button data-tab="analisis">Análisis de Clientes y Pedidos</button>
   </nav>
 
   <main>
@@ -611,6 +617,35 @@
       </table>
     </section>
 
+    <!-- ANÁLISIS DE CLIENTES Y PEDIDOS -->
+    <section id="panel-analisis" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Análisis de Clientes y Pedidos</h2>
+          <p>Concentración de clientes y tendencia de pedidos a lo largo del tiempo.</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Concentración de clientes</h3>
+      <p style="font-size:12px; color:var(--texto-suave); margin:-4px 0 14px;">Clientes con más de 25% del volumen o más de 14 días sin pedido se resaltan en rojo — señales de dependencia excesiva o de un cliente que puede estar perdiéndose.</p>
+      <div style="background:white; border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm); margin-bottom:20px;">
+        <div style="position:relative; height:320px;">
+          <canvas id="chart-concentracion"></canvas>
+        </div>
+      </div>
+      <table style="margin-bottom:32px;">
+        <thead><tr><th>Cliente</th><th>% del volumen</th><th>Unidades totales</th><th>Pedidos totales</th><th>Días sin pedido</th></tr></thead>
+        <tbody id="tbody-concentracion"></tbody>
+      </table>
+
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Tendencia de pedidos</h3>
+      <div style="background:white; border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm);">
+        <div style="position:relative; height:320px;">
+          <canvas id="chart-tendencia"></canvas>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -682,6 +717,10 @@
   let ENTREGADO_POR_PEDIDO = {};
   let CLIENTES_POTENCIALES = [];
   let ASISTENCIA = [];
+  let CONCENTRACION_CLIENTES = [];
+  let TENDENCIA_SEMANAL = [];
+  let chartConcentracion = null;
+  let chartTendencia = null;
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
   let rangoAsistDesde, rangoAsistHasta;
@@ -698,7 +737,7 @@
     await Promise.all([cargarProductos(), cargarClienteProducto(), cargarClientesPotenciales()]);
     await cargarClientes();
     await cargarContactos();
-    await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia()]);
+    await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia(), cargarAnalisis()]);
     document.getElementById('conn-status').textContent = 'conectado';
   }
 
@@ -1763,6 +1802,147 @@
             <td><span class="pill ${f.turnoAbierto ? 'off' : 'on'}">${f.turnoAbierto ? 'Turno abierto' : 'Completo'}</span></td>
           </tr>`).join('')
       : '<tr><td colspan="5" class="empty">Sin marcaciones en este período</td></tr>';
+  }
+
+  // ---------- ANÁLISIS DE CLIENTES Y PEDIDOS ----------
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function formatSemana(s) {
+    if (!s) return '—';
+    const d = new Date(String(s).length === 10 ? s + 'T00:00:00' : s);
+    if (!isNaN(d)) return fechaLegible(d);
+    return String(s);
+  }
+
+  async function cargarAnalisis() {
+    await Promise.all([cargarConcentracionClientes(), cargarTendenciaSemanal()]);
+  }
+
+  async function cargarConcentracionClientes() {
+    const { data, error } = await sb.from('vista_concentracion_clientes')
+      .select('*')
+      .order('total_unidades', { ascending: false });
+    if (error) { toast('Error cargando concentración de clientes: ' + error.message, true); return; }
+    CONCENTRACION_CLIENTES = data || [];
+    renderConcentracionClientes();
+    renderChartConcentracion();
+  }
+
+  async function cargarTendenciaSemanal() {
+    const { data, error } = await sb.from('vista_tendencia_semanal')
+      .select('*')
+      .order('semana', { ascending: true });
+    if (error) { toast('Error cargando tendencia semanal: ' + error.message, true); return; }
+    TENDENCIA_SEMANAL = data || [];
+    renderChartTendencia();
+  }
+
+  function renderConcentracionClientes() {
+    const tbody = document.getElementById('tbody-concentracion');
+    if (!CONCENTRACION_CLIENTES.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin datos de concentración de clientes.</td></tr>'; return; }
+    tbody.innerHTML = CONCENTRACION_CLIENTES.map(c => {
+      const pct = Number(c.porcentaje_volumen) || 0;
+      const dias = c.dias_sin_pedido;
+      const altaConcentracion = pct > 25;
+      const clientePerdiendose = dias != null && dias > 14;
+      const filaAlerta = altaConcentracion || clientePerdiendose;
+      return `
+        <tr style="${filaAlerta ? 'background:rgba(166,67,47,0.05);' : ''}">
+          <td>
+            <strong>${esc(c.cliente_nombre)}</strong>
+            ${altaConcentracion ? '<span class="pill off" style="margin-left:8px;">Alta concentración</span>' : ''}
+            ${clientePerdiendose ? '<span class="pill off" style="margin-left:8px;">Posible pérdida</span>' : ''}
+          </td>
+          <td style="${altaConcentracion ? 'color:var(--error); font-weight:700;' : ''}">${pct.toFixed(1)}%</td>
+          <td>${(Number(c.total_unidades) || 0).toLocaleString('es-CO')}</td>
+          <td>${(Number(c.total_pedidos) || 0).toLocaleString('es-CO')}</td>
+          <td style="${clientePerdiendose ? 'color:var(--error); font-weight:700;' : ''}">${dias ?? '—'}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function renderChartConcentracion() {
+    const canvas = document.getElementById('chart-concentracion');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const labels = CONCENTRACION_CLIENTES.map(c => c.cliente_nombre);
+    const valores = CONCENTRACION_CLIENTES.map(c => Number(c.porcentaje_volumen) || 0);
+    const colores = valores.map(v => v > 25 ? cssVar('--error') : cssVar('--costra'));
+
+    if (chartConcentracion) { chartConcentracion.destroy(); }
+    chartConcentracion = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '% del volumen',
+          data: valores,
+          backgroundColor: colores,
+          borderRadius: 4,
+          maxBarThickness: 22,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (item) => item.parsed.x.toFixed(1) + '% del volumen' } }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { callback: (v) => v + '%' }, grid: { color: cssVar('--gray-200') } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  function renderChartTendencia() {
+    const canvas = document.getElementById('chart-tendencia');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const labels = TENDENCIA_SEMANAL.map(t => formatSemana(t.semana));
+    const unidades = TENDENCIA_SEMANAL.map(t => Number(t.total_unidades) || 0);
+    const clientesActivos = TENDENCIA_SEMANAL.map(t => Number(t.clientes_activos) || 0);
+
+    if (chartTendencia) { chartTendencia.destroy(); }
+    chartTendencia = new Chart(canvas, {
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Unidades totales',
+            data: unidades,
+            backgroundColor: cssVar('--costra'),
+            borderRadius: 4,
+            yAxisID: 'yUnidades',
+            order: 2
+          },
+          {
+            type: 'line',
+            label: 'Clientes activos',
+            data: clientesActivos,
+            borderColor: cssVar('--horno-2'),
+            backgroundColor: cssVar('--horno-2'),
+            tension: 0.3,
+            yAxisID: 'yClientes',
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, position: 'top' } },
+        scales: {
+          yUnidades: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Unidades' }, grid: { color: cssVar('--gray-200') } },
+          yClientes: { type: 'linear', position: 'right', beginAtZero: true, title: { display: true, text: 'Clientes activos' }, grid: { display: false } }
+        }
+      }
+    });
   }
 
   // Cargar contactos cuando se abre esa pestaña la primera vez
