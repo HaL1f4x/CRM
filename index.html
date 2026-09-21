@@ -251,6 +251,7 @@
   .pill { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; }
   .pill.on { background: #E7EFE2; color: var(--ok); }
   .pill.off { background: #F3E4DF; color: var(--error); }
+  .pill.neutral { background: var(--gray-100); color: var(--gray-600); }
 
   .row-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px; background: var(--masa-2); border-radius: var(--radius-md); margin-bottom: 14px; }
   .row-form input, .row-form select, select.mini, input.mini {
@@ -626,6 +627,10 @@
         </div>
       </div>
 
+      <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Insights del día</h3>
+      <p id="insights-fecha-label" style="font-size:12px; color:var(--texto-suave); margin:-4px 0 14px;"></p>
+      <div id="insights-ia-lista" style="display:flex; flex-direction:column; gap:12px; margin-bottom:32px;"></div>
+
       <h3 style="font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:10px;">Concentración de clientes</h3>
       <p style="font-size:12px; color:var(--texto-suave); margin:-4px 0 14px;">Clientes con más de 25% del volumen o más de 14 días sin pedido se resaltan en rojo — señales de dependencia excesiva o de un cliente que puede estar perdiéndose.</p>
       <div style="background:white; border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm); margin-bottom:20px;">
@@ -719,6 +724,7 @@
   let ASISTENCIA = [];
   let CONCENTRACION_CLIENTES = [];
   let TENDENCIA_SEMANAL = [];
+  let INSIGHTS_IA = [];
   let chartConcentracion = null;
   let chartTendencia = null;
   let rangoDesde, rangoHasta;
@@ -1817,7 +1823,57 @@
   }
 
   async function cargarAnalisis() {
-    await Promise.all([cargarConcentracionClientes(), cargarTendenciaSemanal()]);
+    await Promise.all([cargarConcentracionClientes(), cargarTendenciaSemanal(), cargarInsightsIA()]);
+  }
+
+  async function cargarInsightsIA() {
+    const { data: ultimaFechaData, error: errorFecha } = await sb.from('analisis_ia')
+      .select('fecha')
+      .order('fecha', { ascending: false })
+      .limit(1);
+    if (errorFecha) { toast('Error cargando insights: ' + errorFecha.message, true); return; }
+    const ultimaFecha = ultimaFechaData && ultimaFechaData.length ? ultimaFechaData[0].fecha : null;
+    if (!ultimaFecha) { INSIGHTS_IA = []; renderInsightsIA(); return; }
+    const { data, error } = await sb.from('analisis_ia')
+      .select('*')
+      .eq('fecha', ultimaFecha);
+    if (error) { toast('Error cargando insights: ' + error.message, true); return; }
+    INSIGHTS_IA = data || [];
+    renderInsightsIA();
+  }
+
+  function renderInsightsIA() {
+    const label = document.getElementById('insights-fecha-label');
+    const lista = document.getElementById('insights-ia-lista');
+    if (!INSIGHTS_IA.length) {
+      label.textContent = '';
+      lista.innerHTML = '<div class="empty" style="background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm);">Aún no hay análisis disponible.</div>';
+      return;
+    }
+    const fecha = INSIGHTS_IA[0].fecha;
+    label.textContent = fecha ? `Última actualización: ${fechaLegible(new Date(fecha + 'T00:00:00'))}` : '';
+
+    const orden = { riesgo: 0, oportunidad: 1, neutral: 2 };
+    const ordenados = [...INSIGHTS_IA].sort((a, b) => (orden[a.tipo] ?? 3) - (orden[b.tipo] ?? 3));
+
+    const META_TIPO = {
+      riesgo: { borde: 'var(--error)', pillClass: 'off', icono: '⚠', label: 'Riesgo' },
+      oportunidad: { borde: 'var(--ok)', pillClass: 'on', icono: '↑', label: 'Oportunidad' },
+      neutral: { borde: 'var(--gray-300)', pillClass: 'neutral', icono: 'ℹ', label: 'Neutral' }
+    };
+
+    lista.innerHTML = ordenados.map(i => {
+      const m = META_TIPO[i.tipo] || META_TIPO.neutral;
+      return `
+        <div style="background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); padding:18px 20px; border-left:4px solid ${m.borde};">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+            <span class="pill ${m.pillClass}">${m.icono} ${m.label}</span>
+            ${i.cliente_nombre ? `<span class="pill neutral">${esc(i.cliente_nombre)}</span>` : ''}
+          </div>
+          <div style="font-weight:700; font-size:15px; margin-bottom:4px;">${esc(i.titulo)}</div>
+          <div style="font-size:13px; color:var(--texto-suave); line-height:1.5;">${esc(i.detalle)}</div>
+        </div>`;
+    }).join('');
   }
 
   async function cargarConcentracionClientes() {
