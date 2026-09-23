@@ -610,6 +610,7 @@
         </span>
         <input type="text" id="ncp-notas" placeholder="Notas">
         <input type="text" id="ncp-resultado-final" placeholder="Resultado final">
+        <input type="text" id="ncp-direccion-muestra" placeholder="Dirección de muestra">
         <button class="primary" onclick="crearClientePotencial()">+ Agregar prospecto</button>
         <button class="ghost" onclick="ocultarFormularioProspecto()">Cancelar</button>
       </div>
@@ -1736,6 +1737,7 @@
       ['Horario preferencia', cp.horario_preferencia],
       ['Notas', cp.notas],
       ['Resultado final', cp.resultado_final],
+      ['Dirección de muestra', cp.direccion_muestra],
       ['Último contacto', cp.fecha_ultimo_contacto ? new Date(cp.fecha_ultimo_contacto + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'}) : null]
     ].filter(([, valor]) => valor != null && String(valor).trim() !== '');
 
@@ -1779,6 +1781,7 @@
       <td><input type="date" class="mini" id="edcp-fecha-ultimo-contacto-${cp.id}" value="${cp.fecha_ultimo_contacto || ''}"></td>
       <td><input type="text" class="mini" id="edcp-notas-${cp.id}" value="${escAttr(cp.notas || '')}"></td>
       <td><input type="text" class="mini" id="edcp-resultado-final-${cp.id}" value="${escAttr(cp.resultado_final || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-direccion-muestra-${cp.id}" value="${escAttr(cp.direccion_muestra || '')}"></td>
       <td style="white-space:nowrap;">
         <button class="link" data-save-cp="${cp.id}">Guardar</button>
         &nbsp;·&nbsp;
@@ -1804,6 +1807,7 @@
     const fechaUltimoContacto = document.getElementById('edcp-fecha-ultimo-contacto-' + id).value;
     const notas = document.getElementById('edcp-notas-' + id).value.trim();
     const resultadoFinal = document.getElementById('edcp-resultado-final-' + id).value.trim();
+    const direccionMuestra = document.getElementById('edcp-direccion-muestra-' + id).value.trim();
     const { error } = await sb.from('clientes_potenciales').update({
       telefono: telefono || null,
       nombre: nombre || null,
@@ -1818,7 +1822,8 @@
       estado: estado || null,
       fecha_ultimo_contacto: fechaUltimoContacto || null,
       notas: notas || null,
-      resultado_final: resultadoFinal || null
+      resultado_final: resultadoFinal || null,
+      direccion_muestra: direccionMuestra || null
     }).eq('id', id);
     if (error) { toast('Error: ' + error.message, true); return; }
     toast('Prospecto actualizado');
@@ -1850,6 +1855,7 @@
     const fechaUltimoContacto = document.getElementById('ncp-fecha-ultimo-contacto').value;
     const notas = document.getElementById('ncp-notas').value.trim();
     const resultadoFinal = document.getElementById('ncp-resultado-final').value.trim();
+    const direccionMuestra = document.getElementById('ncp-direccion-muestra').value.trim();
     const { error } = await sb.from('clientes_potenciales').insert({
       telefono: telefono || null,
       nombre: nombre || null,
@@ -1864,7 +1870,8 @@
       estado: estado || null,
       fecha_ultimo_contacto: fechaUltimoContacto || null,
       notas: notas || null,
-      resultado_final: resultadoFinal || null
+      resultado_final: resultadoFinal || null,
+      direccion_muestra: direccionMuestra || null
     });
     if (error) { toast('Error: ' + error.message, true); return; }
     document.getElementById('ncp-telefono').value = '';
@@ -1881,6 +1888,7 @@
     document.getElementById('ncp-fecha-ultimo-contacto').value = '';
     document.getElementById('ncp-notas').value = '';
     document.getElementById('ncp-resultado-final').value = '';
+    document.getElementById('ncp-direccion-muestra').value = '';
     ocultarFormularioProspecto();
     toast('Prospecto agregado');
     cargarClientesPotenciales();
