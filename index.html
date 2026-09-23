@@ -586,8 +586,32 @@
       <div class="panel-head">
         <div>
           <h2>Clientes potenciales</h2>
-          <p>Leads capturados por el bot de WhatsApp. Los campos de seguimiento se editan directo en la tabla.</p>
+          <p>Leads capturados por el bot de WhatsApp. Usa "Editar" en una fila para modificar sus datos.</p>
         </div>
+      </div>
+
+      <button class="primary" id="btn-nuevo-prospecto" onclick="mostrarFormularioProspecto()">+ Nuevo prospecto</button>
+
+      <div class="row-form" id="ncp-form-wrap" style="display:none;">
+        <input type="tel" id="ncp-telefono" placeholder="Teléfono">
+        <input type="text" id="ncp-nombre" placeholder="Nombre">
+        <input type="text" id="ncp-nombre-local" placeholder="Nombre del local">
+        <input type="text" id="ncp-canal-origen" placeholder="Canal de origen">
+        <input type="text" id="ncp-campana" placeholder="Campaña">
+        <input type="text" id="ncp-tipo-negocio" placeholder="Tipo de negocio">
+        <input type="text" id="ncp-ciudad" placeholder="Ciudad">
+        <input type="text" id="ncp-volumen-estimado" placeholder="Volumen estimado">
+        <input type="text" id="ncp-tipo-agenda" placeholder="Tipo de agenda">
+        <input type="text" id="ncp-horario-preferencia" placeholder="Horario preferencia">
+        <input type="text" id="ncp-estado" placeholder="Estado">
+        <span style="display:flex; flex-direction:column; gap:3px;">
+          <label for="ncp-fecha-ultimo-contacto" style="font-size:11px; color:var(--texto-suave);">Último contacto</label>
+          <input type="date" class="mini" id="ncp-fecha-ultimo-contacto">
+        </span>
+        <input type="text" id="ncp-notas" placeholder="Notas">
+        <input type="text" id="ncp-resultado-final" placeholder="Resultado final">
+        <button class="primary" onclick="crearClientePotencial()">+ Agregar prospecto</button>
+        <button class="ghost" onclick="ocultarFormularioProspecto()">Cancelar</button>
       </div>
 
       <div style="overflow-x:auto;">
@@ -598,6 +622,7 @@
               <th>Nombre</th>
               <th>Nombre local</th>
               <th>Canal origen</th>
+              <th>Campaña</th>
               <th>Tipo de negocio</th>
               <th>Ciudad</th>
               <th>Volumen estimado</th>
@@ -1686,40 +1711,158 @@
 
   function renderClientesPotenciales() {
     const tbody = document.getElementById('tbody-potenciales');
-    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="14" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
-    tbody.innerHTML = CLIENTES_POTENCIALES.map(cp => `
-      <tr>
-        <td>${esc(cp.telefono || '—')}</td>
-        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="nombre" value="${escAttr(cp.nombre || '')}" style="min-width:140px;"></td>
-        <td>${esc(cp.nombre_local || '—')}</td>
-        <td>${esc(cp.canal_origen || '—')}</td>
-        <td>${esc(cp.tipo_negocio || '—')}</td>
-        <td>${esc(cp.ciudad || '—')}</td>
-        <td>${esc(cp.volumen_estimado || '—')}</td>
-        <td>${esc(cp.tipo_agenda || '—')}</td>
-        <td>${esc(cp.horario_preferencia || '—')}</td>
-        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="estado" value="${escAttr(cp.estado || '')}" style="min-width:110px;"></td>
-        <td><input type="date" class="mini" data-cp-id="${cp.id}" data-cp-field="fecha_ultimo_contacto" value="${cp.fecha_ultimo_contacto || ''}" style="min-width:140px;"></td>
-        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="notas" value="${escAttr(cp.notas || '')}" style="min-width:180px;"></td>
-        <td><input type="text" class="mini" data-cp-id="${cp.id}" data-cp-field="resultado_final" value="${escAttr(cp.resultado_final || '')}" style="min-width:140px;"></td>
-        <td>${cp.created_at ? new Date(cp.created_at).toLocaleString('es-CO', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'}</td>
-      </tr>`).join('');
-
-    tbody.querySelectorAll('[data-cp-field]').forEach(input => {
-      input.addEventListener('change', () => guardarCampoPotencial(input));
+    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="15" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
+    tbody.innerHTML = '';
+    CLIENTES_POTENCIALES.forEach(cp => {
+      const tr = document.createElement('tr');
+      pintarFilaPotencial(tr, cp);
+      tbody.appendChild(tr);
     });
   }
 
-  async function guardarCampoPotencial(input) {
-    const id = input.dataset.cpId;
-    const field = input.dataset.cpField;
-    const value = input.value.trim() === '' ? null : input.value;
-    const { error } = await sb.from('clientes_potenciales').update({ [field]: value }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    const cp = CLIENTES_POTENCIALES.find(x => String(x.id) === String(id));
-    if (cp) cp[field] = value;
-    toast('Cambio guardado');
+  function pintarFilaPotencial(tr, cp) {
+    tr.innerHTML = `
+      <td>${esc(cp.telefono || '—')}</td>
+      <td><button class="link" data-edit-cp="${cp.id}">Editar</button> &nbsp;<strong>${esc(cp.nombre || '—')}</strong></td>
+      <td>${esc(cp.nombre_local || '—')}</td>
+      <td>${esc(cp.canal_origen || '—')}</td>
+      <td>${esc(cp.campana || '—')}</td>
+      <td>${esc(cp.tipo_negocio || '—')}</td>
+      <td>${esc(cp.ciudad || '—')}</td>
+      <td>${esc(cp.volumen_estimado || '—')}</td>
+      <td>${esc(cp.tipo_agenda || '—')}</td>
+      <td>${esc(cp.horario_preferencia || '—')}</td>
+      <td>${esc(cp.estado || '—')}</td>
+      <td>${cp.fecha_ultimo_contacto ? new Date(cp.fecha_ultimo_contacto + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'}) : '—'}</td>
+      <td>${esc(cp.notas || '—')}</td>
+      <td>${esc(cp.resultado_final || '—')}</td>
+      <td>${cp.created_at ? new Date(cp.created_at).toLocaleString('es-CO', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'}</td>
+    `;
+    tr.querySelector('[data-edit-cp]').addEventListener('click', () => pintarFilaPotencialEdicion(tr, cp));
   }
+
+  function pintarFilaPotencialEdicion(tr, cp) {
+    tr.innerHTML = `
+      <td><input type="tel" class="mini" id="edcp-telefono-${cp.id}" value="${escAttr(cp.telefono || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-nombre-${cp.id}" value="${escAttr(cp.nombre || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-nombre-local-${cp.id}" value="${escAttr(cp.nombre_local || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-canal-origen-${cp.id}" value="${escAttr(cp.canal_origen || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-campana-${cp.id}" value="${escAttr(cp.campana || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-tipo-negocio-${cp.id}" value="${escAttr(cp.tipo_negocio || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-ciudad-${cp.id}" value="${escAttr(cp.ciudad || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-volumen-estimado-${cp.id}" value="${escAttr(cp.volumen_estimado || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-tipo-agenda-${cp.id}" value="${escAttr(cp.tipo_agenda || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-horario-preferencia-${cp.id}" value="${escAttr(cp.horario_preferencia || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-estado-${cp.id}" value="${escAttr(cp.estado || '')}"></td>
+      <td><input type="date" class="mini" id="edcp-fecha-ultimo-contacto-${cp.id}" value="${cp.fecha_ultimo_contacto || ''}"></td>
+      <td><input type="text" class="mini" id="edcp-notas-${cp.id}" value="${escAttr(cp.notas || '')}"></td>
+      <td><input type="text" class="mini" id="edcp-resultado-final-${cp.id}" value="${escAttr(cp.resultado_final || '')}"></td>
+      <td style="white-space:nowrap;">
+        <button class="link" data-save-cp="${cp.id}">Guardar</button>
+        &nbsp;·&nbsp;
+        <button class="link" data-cancel-cp="${cp.id}">Cancelar</button>
+      </td>
+    `;
+    tr.querySelector('[data-save-cp]').addEventListener('click', () => guardarPotencial(cp.id));
+    tr.querySelector('[data-cancel-cp]').addEventListener('click', () => { pintarFilaPotencial(tr, cp); });
+  }
+
+  async function guardarPotencial(id) {
+    const telefono = document.getElementById('edcp-telefono-' + id).value.trim();
+    const nombre = document.getElementById('edcp-nombre-' + id).value.trim();
+    const nombreLocal = document.getElementById('edcp-nombre-local-' + id).value.trim();
+    const canalOrigen = document.getElementById('edcp-canal-origen-' + id).value.trim();
+    const campana = document.getElementById('edcp-campana-' + id).value.trim();
+    const tipoNegocio = document.getElementById('edcp-tipo-negocio-' + id).value.trim();
+    const ciudad = document.getElementById('edcp-ciudad-' + id).value.trim();
+    const volumenEstimado = document.getElementById('edcp-volumen-estimado-' + id).value.trim();
+    const tipoAgenda = document.getElementById('edcp-tipo-agenda-' + id).value.trim();
+    const horarioPreferencia = document.getElementById('edcp-horario-preferencia-' + id).value.trim();
+    const estado = document.getElementById('edcp-estado-' + id).value.trim();
+    const fechaUltimoContacto = document.getElementById('edcp-fecha-ultimo-contacto-' + id).value;
+    const notas = document.getElementById('edcp-notas-' + id).value.trim();
+    const resultadoFinal = document.getElementById('edcp-resultado-final-' + id).value.trim();
+    const { error } = await sb.from('clientes_potenciales').update({
+      telefono: telefono || null,
+      nombre: nombre || null,
+      nombre_local: nombreLocal || null,
+      canal_origen: canalOrigen || null,
+      campana: campana || null,
+      tipo_negocio: tipoNegocio || null,
+      ciudad: ciudad || null,
+      volumen_estimado: volumenEstimado || null,
+      tipo_agenda: tipoAgenda || null,
+      horario_preferencia: horarioPreferencia || null,
+      estado: estado || null,
+      fecha_ultimo_contacto: fechaUltimoContacto || null,
+      notas: notas || null,
+      resultado_final: resultadoFinal || null
+    }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Prospecto actualizado');
+    cargarClientesPotenciales();
+  }
+
+  window.mostrarFormularioProspecto = function() {
+    document.getElementById('ncp-form-wrap').style.display = '';
+    document.getElementById('btn-nuevo-prospecto').style.display = 'none';
+  };
+
+  window.ocultarFormularioProspecto = function() {
+    document.getElementById('ncp-form-wrap').style.display = 'none';
+    document.getElementById('btn-nuevo-prospecto').style.display = '';
+  };
+
+  window.crearClientePotencial = async function() {
+    const telefono = document.getElementById('ncp-telefono').value.trim();
+    const nombre = document.getElementById('ncp-nombre').value.trim();
+    const nombreLocal = document.getElementById('ncp-nombre-local').value.trim();
+    const canalOrigen = document.getElementById('ncp-canal-origen').value.trim();
+    const campana = document.getElementById('ncp-campana').value.trim();
+    const tipoNegocio = document.getElementById('ncp-tipo-negocio').value.trim();
+    const ciudad = document.getElementById('ncp-ciudad').value.trim();
+    const volumenEstimado = document.getElementById('ncp-volumen-estimado').value.trim();
+    const tipoAgenda = document.getElementById('ncp-tipo-agenda').value.trim();
+    const horarioPreferencia = document.getElementById('ncp-horario-preferencia').value.trim();
+    const estado = document.getElementById('ncp-estado').value.trim();
+    const fechaUltimoContacto = document.getElementById('ncp-fecha-ultimo-contacto').value;
+    const notas = document.getElementById('ncp-notas').value.trim();
+    const resultadoFinal = document.getElementById('ncp-resultado-final').value.trim();
+    const { error } = await sb.from('clientes_potenciales').insert({
+      telefono: telefono || null,
+      nombre: nombre || null,
+      nombre_local: nombreLocal || null,
+      canal_origen: canalOrigen || null,
+      campana: campana || null,
+      tipo_negocio: tipoNegocio || null,
+      ciudad: ciudad || null,
+      volumen_estimado: volumenEstimado || null,
+      tipo_agenda: tipoAgenda || null,
+      horario_preferencia: horarioPreferencia || null,
+      estado: estado || null,
+      fecha_ultimo_contacto: fechaUltimoContacto || null,
+      notas: notas || null,
+      resultado_final: resultadoFinal || null
+    });
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('ncp-telefono').value = '';
+    document.getElementById('ncp-nombre').value = '';
+    document.getElementById('ncp-nombre-local').value = '';
+    document.getElementById('ncp-canal-origen').value = '';
+    document.getElementById('ncp-campana').value = '';
+    document.getElementById('ncp-tipo-negocio').value = '';
+    document.getElementById('ncp-ciudad').value = '';
+    document.getElementById('ncp-volumen-estimado').value = '';
+    document.getElementById('ncp-tipo-agenda').value = '';
+    document.getElementById('ncp-horario-preferencia').value = '';
+    document.getElementById('ncp-estado').value = '';
+    document.getElementById('ncp-fecha-ultimo-contacto').value = '';
+    document.getElementById('ncp-notas').value = '';
+    document.getElementById('ncp-resultado-final').value = '';
+    ocultarFormularioProspecto();
+    toast('Prospecto agregado');
+    cargarClientesPotenciales();
+  };
 
   // ---------- ASISTENCIA ----------
   function primerDiaDelMes(d) {
