@@ -620,19 +620,10 @@
             <tr>
               <th>Teléfono</th>
               <th>Nombre</th>
-              <th>Nombre local</th>
-              <th>Canal origen</th>
-              <th>Campaña</th>
-              <th>Tipo de negocio</th>
               <th>Ciudad</th>
-              <th>Volumen estimado</th>
-              <th>Tipo de agenda</th>
-              <th>Horario preferencia</th>
+              <th>Tipo de negocio</th>
               <th>Estado</th>
-              <th>Último contacto</th>
-              <th>Notas</th>
-              <th>Resultado final</th>
-              <th>Creado</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-potenciales"></tbody>
@@ -1711,34 +1702,65 @@
 
   function renderClientesPotenciales() {
     const tbody = document.getElementById('tbody-potenciales');
-    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="15" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
+    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
     tbody.innerHTML = '';
     CLIENTES_POTENCIALES.forEach(cp => {
       const tr = document.createElement('tr');
       pintarFilaPotencial(tr, cp);
       tbody.appendChild(tr);
+
+      const subTr = document.createElement('tr');
+      subTr.className = 'subrow';
+      subTr.style.display = 'none';
+      subTr.setAttribute('data-sub-cp-for', cp.id);
+      const subTd = document.createElement('td');
+      subTd.colSpan = 6;
+      subTd.innerHTML = construirDetallePotencial(cp);
+      subTr.appendChild(subTd);
+      tbody.appendChild(subTr);
     });
+  }
+
+  function claseEstadoPotencial(estado) {
+    const claseConocida = { 'Nuevo': 'neutral' };
+    return claseConocida[estado] || 'neutral';
+  }
+
+  function construirDetallePotencial(cp) {
+    const campos = [
+      ['Nombre local', cp.nombre_local],
+      ['Canal origen', cp.canal_origen],
+      ['Campaña', cp.campana],
+      ['Volumen estimado', cp.volumen_estimado],
+      ['Tipo de agenda', cp.tipo_agenda],
+      ['Horario preferencia', cp.horario_preferencia],
+      ['Notas', cp.notas],
+      ['Resultado final', cp.resultado_final],
+      ['Último contacto', cp.fecha_ultimo_contacto ? new Date(cp.fecha_ultimo_contacto + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'}) : null]
+    ].filter(([, valor]) => valor != null && String(valor).trim() !== '');
+
+    if (!campos.length) {
+      return '<span style="color:var(--texto-suave);">Sin información adicional todavía</span>';
+    }
+    return campos.map(([etiqueta, valor]) => `<div style="margin-bottom:6px;"><strong>${esc(etiqueta)}:</strong> ${esc(valor)}</div>`).join('');
   }
 
   function pintarFilaPotencial(tr, cp) {
     tr.innerHTML = `
       <td>${esc(cp.telefono || '—')}</td>
       <td><button class="link" data-edit-cp="${cp.id}">Editar</button> &nbsp;<strong>${esc(cp.nombre || '—')}</strong></td>
-      <td>${esc(cp.nombre_local || '—')}</td>
-      <td>${esc(cp.canal_origen || '—')}</td>
-      <td>${esc(cp.campana || '—')}</td>
-      <td>${esc(cp.tipo_negocio || '—')}</td>
       <td>${esc(cp.ciudad || '—')}</td>
-      <td>${esc(cp.volumen_estimado || '—')}</td>
-      <td>${esc(cp.tipo_agenda || '—')}</td>
-      <td>${esc(cp.horario_preferencia || '—')}</td>
-      <td>${esc(cp.estado || '—')}</td>
-      <td>${cp.fecha_ultimo_contacto ? new Date(cp.fecha_ultimo_contacto + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'}) : '—'}</td>
-      <td>${esc(cp.notas || '—')}</td>
-      <td>${esc(cp.resultado_final || '—')}</td>
-      <td>${cp.created_at ? new Date(cp.created_at).toLocaleString('es-CO', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'}</td>
+      <td>${esc(cp.tipo_negocio || '—')}</td>
+      <td><span class="pill ${claseEstadoPotencial(cp.estado)}">${esc(cp.estado || 'Sin estado')}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="link" data-toggle-cp="${cp.id}">Ver detalle ▾</button>
+      </td>
     `;
     tr.querySelector('[data-edit-cp]').addEventListener('click', () => pintarFilaPotencialEdicion(tr, cp));
+    tr.querySelector('[data-toggle-cp]').addEventListener('click', () => {
+      const subTr = document.querySelector(`tr[data-sub-cp-for="${cp.id}"]`);
+      subTr.style.display = subTr.style.display === 'none' ? 'table-row' : 'none';
+    });
   }
 
   function pintarFilaPotencialEdicion(tr, cp) {
