@@ -270,6 +270,9 @@
   .pill.on { background: #E7EFE2; color: var(--ok); }
   .pill.off { background: #F3E4DF; color: var(--error); }
   .pill.neutral { background: var(--gray-100); color: var(--gray-600); }
+  .pill.warn { background: #FBE8C6; color: #8A5A12; border: 1px solid #E3B769; }
+
+  .cp-edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 
   .row-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 14px; background: var(--masa-2); border-radius: var(--radius-md); margin-bottom: 14px; }
   .row-form input, .row-form select, select.mini, input.mini {
@@ -603,7 +606,12 @@
         <input type="text" id="ncp-volumen-estimado" placeholder="Volumen estimado">
         <input type="text" id="ncp-tipo-agenda" placeholder="Tipo de agenda">
         <input type="text" id="ncp-horario-preferencia" placeholder="Horario preferencia">
-        <input type="text" id="ncp-estado" placeholder="Estado">
+        <select id="ncp-estado">
+          <option value="Nuevo" selected>Nuevo</option>
+          <option value="Muestra Agendada">Muestra Agendada</option>
+          <option value="No Interesado">No Interesado</option>
+          <option value="Convertir a Cliente">Convertir a Cliente</option>
+        </select>
         <span style="display:flex; flex-direction:column; gap:3px;">
           <label for="ncp-fecha-ultimo-contacto" style="font-size:11px; color:var(--texto-suave);">Último contacto</label>
           <input type="date" class="mini" id="ncp-fecha-ultimo-contacto">
@@ -1717,14 +1725,36 @@
       const subTd = document.createElement('td');
       subTd.colSpan = 6;
       subTd.innerHTML = construirDetallePotencial(cp);
+      subTd.dataset.modo = 'detalle';
       subTr.appendChild(subTd);
       tbody.appendChild(subTr);
     });
   }
 
+  const ESTADOS_POTENCIAL_FIJOS = ['Nuevo', 'Muestra Agendada', 'No Interesado', 'Convertir a Cliente'];
+
+  // Empareja por texto sin importar mayúsculas/minúsculas, para no perder de vista
+  // datos viejos con distinta capitalización (ej. "No interesado" vs "No Interesado").
+  function estadoFijoCoincidente(estado) {
+    if (!estado) return null;
+    const normalizado = String(estado).trim().toLowerCase();
+    return ESTADOS_POTENCIAL_FIJOS.find(f => f.toLowerCase() === normalizado) || null;
+  }
+
   function claseEstadoPotencial(estado) {
-    const claseConocida = { 'Nuevo': 'neutral' };
-    return claseConocida[estado] || 'neutral';
+    const claseConocida = { 'Nuevo': 'neutral', 'Muestra Agendada': 'warn', 'No Interesado': 'off', 'Convertir a Cliente': 'on' };
+    const coincidencia = estadoFijoCoincidente(estado);
+    return coincidencia ? claseConocida[coincidencia] : 'neutral';
+  }
+
+  function opcionesEstadoPotencial(estadoActual) {
+    const coincidencia = estadoFijoCoincidente(estadoActual);
+    let html = `<option value="">— Sin estado —</option>`;
+    html += ESTADOS_POTENCIAL_FIJOS.map(o => `<option value="${o}" ${coincidencia === o ? 'selected' : ''}>${o}</option>`).join('');
+    if (estadoActual && !coincidencia) {
+      html += `<option value="${escAttr(estadoActual)}" selected>${esc(estadoActual)}</option>`;
+    }
+    return html;
   }
 
   function construirDetallePotencial(cp) {
@@ -1758,38 +1788,66 @@
         <button class="link" data-toggle-cp="${cp.id}">Ver detalle ▾</button>
       </td>
     `;
-    tr.querySelector('[data-edit-cp]').addEventListener('click', () => pintarFilaPotencialEdicion(tr, cp));
+    tr.querySelector('[data-edit-cp]').addEventListener('click', () => pintarFilaPotencialEdicion(cp));
     tr.querySelector('[data-toggle-cp]').addEventListener('click', () => {
       const subTr = document.querySelector(`tr[data-sub-cp-for="${cp.id}"]`);
-      subTr.style.display = subTr.style.display === 'none' ? 'table-row' : 'none';
+      const subTd = subTr.querySelector('td');
+      const mostrandoDetalle = subTr.style.display !== 'none' && subTd.dataset.modo === 'detalle';
+      if (mostrandoDetalle) {
+        subTr.style.display = 'none';
+      } else {
+        subTd.innerHTML = construirDetallePotencial(cp);
+        subTd.dataset.modo = 'detalle';
+        subTr.style.display = 'table-row';
+      }
     });
   }
 
-  function pintarFilaPotencialEdicion(tr, cp) {
-    tr.innerHTML = `
-      <td><input type="tel" class="mini" id="edcp-telefono-${cp.id}" value="${escAttr(cp.telefono || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-nombre-${cp.id}" value="${escAttr(cp.nombre || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-nombre-local-${cp.id}" value="${escAttr(cp.nombre_local || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-canal-origen-${cp.id}" value="${escAttr(cp.canal_origen || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-campana-${cp.id}" value="${escAttr(cp.campana || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-tipo-negocio-${cp.id}" value="${escAttr(cp.tipo_negocio || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-ciudad-${cp.id}" value="${escAttr(cp.ciudad || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-volumen-estimado-${cp.id}" value="${escAttr(cp.volumen_estimado || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-tipo-agenda-${cp.id}" value="${escAttr(cp.tipo_agenda || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-horario-preferencia-${cp.id}" value="${escAttr(cp.horario_preferencia || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-estado-${cp.id}" value="${escAttr(cp.estado || '')}"></td>
-      <td><input type="date" class="mini" id="edcp-fecha-ultimo-contacto-${cp.id}" value="${cp.fecha_ultimo_contacto || ''}"></td>
-      <td><input type="text" class="mini" id="edcp-notas-${cp.id}" value="${escAttr(cp.notas || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-resultado-final-${cp.id}" value="${escAttr(cp.resultado_final || '')}"></td>
-      <td><input type="text" class="mini" id="edcp-direccion-muestra-${cp.id}" value="${escAttr(cp.direccion_muestra || '')}"></td>
-      <td style="white-space:nowrap;">
-        <button class="link" data-save-cp="${cp.id}">Guardar</button>
-        &nbsp;·&nbsp;
-        <button class="link" data-cancel-cp="${cp.id}">Cancelar</button>
-      </td>
-    `;
-    tr.querySelector('[data-save-cp]').addEventListener('click', () => guardarPotencial(cp.id));
-    tr.querySelector('[data-cancel-cp]').addEventListener('click', () => { pintarFilaPotencial(tr, cp); });
+  function construirFormularioEdicionPotencial(cp) {
+    const campo = (id, etiqueta, valor, tipo = 'text') => `
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label for="${id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">${esc(etiqueta)}</label>
+        <input type="${tipo}" class="mini" id="${id}" value="${escAttr(valor || '')}">
+      </div>`;
+
+    return `
+      <div class="cp-edit-grid" style="margin-bottom:14px;">
+        ${campo(`edcp-telefono-${cp.id}`, 'Teléfono', cp.telefono, 'tel')}
+        ${campo(`edcp-nombre-${cp.id}`, 'Nombre', cp.nombre)}
+        ${campo(`edcp-nombre-local-${cp.id}`, 'Nombre local', cp.nombre_local)}
+        ${campo(`edcp-canal-origen-${cp.id}`, 'Canal origen', cp.canal_origen)}
+        ${campo(`edcp-campana-${cp.id}`, 'Campaña', cp.campana)}
+        ${campo(`edcp-tipo-negocio-${cp.id}`, 'Tipo de negocio', cp.tipo_negocio)}
+        ${campo(`edcp-ciudad-${cp.id}`, 'Ciudad', cp.ciudad)}
+        ${campo(`edcp-volumen-estimado-${cp.id}`, 'Volumen estimado', cp.volumen_estimado)}
+        ${campo(`edcp-tipo-agenda-${cp.id}`, 'Tipo de agenda', cp.tipo_agenda)}
+        ${campo(`edcp-horario-preferencia-${cp.id}`, 'Horario preferencia', cp.horario_preferencia)}
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label for="edcp-estado-${cp.id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">Estado</label>
+          <select class="mini" id="edcp-estado-${cp.id}">${opcionesEstadoPotencial(cp.estado)}</select>
+        </div>
+        ${campo(`edcp-fecha-ultimo-contacto-${cp.id}`, 'Último contacto', cp.fecha_ultimo_contacto, 'date')}
+        ${campo(`edcp-notas-${cp.id}`, 'Notas', cp.notas)}
+        ${campo(`edcp-resultado-final-${cp.id}`, 'Resultado final', cp.resultado_final)}
+        ${campo(`edcp-direccion-muestra-${cp.id}`, 'Dirección de muestra', cp.direccion_muestra)}
+      </div>
+      <div>
+        <button class="primary" data-save-cp="${cp.id}">Guardar</button>
+        <button class="ghost" data-cancel-cp="${cp.id}">Cancelar</button>
+      </div>`;
+  }
+
+  function pintarFilaPotencialEdicion(cp) {
+    const subTr = document.querySelector(`tr[data-sub-cp-for="${cp.id}"]`);
+    const subTd = subTr.querySelector('td');
+    subTd.innerHTML = construirFormularioEdicionPotencial(cp);
+    subTd.dataset.modo = 'edicion';
+    subTr.style.display = 'table-row';
+    subTd.querySelector('[data-save-cp]').addEventListener('click', () => guardarPotencial(cp.id));
+    subTd.querySelector('[data-cancel-cp]').addEventListener('click', () => {
+      subTd.innerHTML = construirDetallePotencial(cp);
+      subTd.dataset.modo = 'detalle';
+    });
   }
 
   async function guardarPotencial(id) {
