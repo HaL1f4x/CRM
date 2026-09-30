@@ -270,6 +270,7 @@
   .pill.off { background: #F3E4DF; color: var(--error); }
   .pill.neutral { background: var(--gray-100); color: var(--gray-600); }
   .pill.warn { background: #FBE8C6; color: #8A5A12; border: 1px solid #E3B769; }
+  .pill.info { background: #DCE8FA; color: #1D4E89; border: 1px solid #A9C7EC; }
 
   .cp-edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 
@@ -759,14 +760,24 @@
       </div>
 
       <div class="row-form" style="align-items:center;">
+        <button class="ghost" id="btn-fact-rango-mes">Este mes</button>
+        <button class="ghost" id="btn-fact-rango-custom">Elegir fechas</button>
+        <span id="fact-rango-custom-inputs" style="display:none; gap:8px; align-items:center;">
+          <input type="date" class="mini" id="fact-rango-desde" style="width:150px">
+          <span style="color:var(--texto-suave); font-size:13px;">hasta</span>
+          <input type="date" class="mini" id="fact-rango-hasta" style="width:150px">
+          <button class="primary" id="btn-fact-aplicar-rango">Aplicar</button>
+        </span>
         <select class="mini" id="fact-filtro-estado" style="min-width:160px;">
           <option value="pendiente" selected>Pendientes</option>
           <option value="aprobada">Aprobadas</option>
           <option value="rechazada">Rechazadas</option>
+          <option value="enviada">Enviadas</option>
           <option value="">Todas</option>
         </select>
         <button class="primary" id="btn-aprobar-todo">Aprobar todo</button>
         <button class="ghost" id="btn-enviar-loggro">Enviar aprobadas a Loggro</button>
+        <span id="fact-rango-label" style="margin-left:auto; font-size:13px; color:var(--texto-suave);"></span>
       </div>
 
       <div id="loggro-resultado" style="display:none;"></div>
@@ -1106,12 +1117,14 @@
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
   let rangoAsistDesde, rangoAsistHasta;
+  let rangoFactDesde, rangoFactHasta;
 
   async function initApp() {
     document.getElementById('conn-status').textContent = 'cargando datos…';
     setRangoSemanaActual();
     setRangoProdSemanaActual();
     setRangoAsistMesActual();
+    setRangoFactMesActual();
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
@@ -2931,9 +2944,44 @@
   document.getElementById('btn-aprobar-todo').addEventListener('click', aprobarTodo);
   document.getElementById('btn-enviar-loggro').addEventListener('click', enviarALoggro);
 
+  function setRangoFactMesActual() {
+    const hoy = new Date();
+    rangoFactDesde = primerDiaDelMes(hoy);
+    rangoFactHasta = ultimoDiaDelMes(hoy);
+    actualizarLabelRangoFact();
+  }
+
+  function actualizarLabelRangoFact() {
+    document.getElementById('fact-rango-label').textContent =
+      `${fechaLegible(rangoFactDesde)} — ${fechaLegible(rangoFactHasta)}`;
+  }
+
+  document.getElementById('btn-fact-rango-mes').addEventListener('click', () => {
+    setRangoFactMesActual();
+    document.getElementById('fact-rango-custom-inputs').style.display = 'none';
+    cargarFacturas();
+  });
+  document.getElementById('btn-fact-rango-custom').addEventListener('click', () => {
+    document.getElementById('fact-rango-custom-inputs').style.display = 'inline-flex';
+    document.getElementById('fact-rango-desde').value = toISODate(rangoFactDesde);
+    document.getElementById('fact-rango-hasta').value = toISODate(rangoFactHasta);
+  });
+  document.getElementById('btn-fact-aplicar-rango').addEventListener('click', () => {
+    const d = document.getElementById('fact-rango-desde').value;
+    const h = document.getElementById('fact-rango-hasta').value;
+    if (!d || !h) { toast('Selecciona ambas fechas', true); return; }
+    rangoFactDesde = new Date(d + 'T00:00:00');
+    rangoFactHasta = new Date(h + 'T00:00:00');
+    actualizarLabelRangoFact();
+    cargarFacturas();
+  });
+
   async function cargarFacturas() {
     const filtro = document.getElementById('fact-filtro-estado').value;
-    let query = sb.from('pizzamos_facturas').select('*').order('fecha_factura', { ascending: false });
+    let query = sb.from('pizzamos_facturas').select('*')
+      .gte('fecha_factura', toISODate(rangoFactDesde))
+      .lte('fecha_factura', toISODate(rangoFactHasta))
+      .order('fecha_factura', { ascending: false });
     if (filtro) query = query.eq('estado', filtro);
     const { data, error } = await query;
     if (error) { toast('Error cargando facturas: ' + error.message, true); return; }
@@ -2942,12 +2990,12 @@
   }
 
   function pillEstadoFactura(estado) {
-    const mapa = { pendiente: 'warn', aprobada: 'on', rechazada: 'off' };
+    const mapa = { pendiente: 'warn', aprobada: 'on', rechazada: 'off', enviada: 'info' };
     return mapa[estado] || 'neutral';
   }
 
   function etiquetaEstadoFactura(estado) {
-    const mapa = { pendiente: 'Pendiente', aprobada: 'Aprobada', rechazada: 'Rechazada' };
+    const mapa = { pendiente: 'Pendiente', aprobada: 'Aprobada', rechazada: 'Rechazada', enviada: 'Enviada' };
     return mapa[estado] || (estado || 'Sin estado');
   }
 
