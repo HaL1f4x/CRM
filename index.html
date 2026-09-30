@@ -331,6 +331,7 @@
     <button data-tab="potenciales">Clientes potenciales</button>
     <button data-tab="asistencia">Asistencia</button>
     <button data-tab="analisis">Análisis de Clientes y Pedidos</button>
+    <button data-tab="facturas">Facturas</button>
   </nav>
 
   <main>
@@ -719,6 +720,31 @@
       </div>
     </section>
 
+    <!-- FACTURAS -->
+    <section id="panel-facturas" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Facturas</h2>
+          <p>Facturas de proveedores extraídas automáticamente, pendientes de revisión antes de enviarse a Loggro.</p>
+        </div>
+      </div>
+
+      <div class="row-form" style="align-items:center;">
+        <select class="mini" id="fact-filtro-estado" style="min-width:160px;">
+          <option value="pendiente" selected>Pendientes</option>
+          <option value="aprobada">Aprobadas</option>
+          <option value="rechazada">Rechazadas</option>
+          <option value="">Todas</option>
+        </select>
+        <button class="primary" id="btn-aprobar-todo">Aprobar todo</button>
+        <button class="ghost" id="btn-enviar-loggro">Enviar aprobadas a Loggro</button>
+      </div>
+
+      <div id="loggro-resultado" style="display:none;"></div>
+
+      <div id="facturas-lista" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </section>
+
   </main>
 </div>
 
@@ -815,6 +841,8 @@
   let INSIGHTS_IA = [];
   let chartConcentracion = null;
   let chartTendencia = null;
+  let FACTURAS = [];
+  let TIPOS_GASTO = [];
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
   let rangoAsistDesde, rangoAsistHasta;
@@ -828,10 +856,10 @@
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
     document.getElementById('en-fecha').value = toISODate(hoy);
-    await Promise.all([cargarProductos(), cargarClienteProducto(), cargarClientesPotenciales()]);
+    await Promise.all([cargarProductos(), cargarClienteProducto(), cargarClientesPotenciales(), cargarTiposGasto()]);
     await cargarClientes();
     await cargarContactos();
-    await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia(), cargarAnalisis()]);
+    await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia(), cargarAnalisis(), cargarFacturas()]);
     document.getElementById('conn-status').textContent = 'conectado';
   }
 
@@ -2293,6 +2321,255 @@
         }
       }
     });
+  }
+
+  // ---------- FACTURAS ----------
+  async function cargarTiposGasto() {
+    const { data, error } = await sb.from('pizzamos_tipos_gasto').select('*').eq('activo', true).order('nombre');
+    if (error) { toast('Error cargando tipos de gasto: ' + error.message, true); return; }
+    TIPOS_GASTO = data || [];
+  }
+
+  document.getElementById('fact-filtro-estado').addEventListener('change', () => cargarFacturas());
+  document.getElementById('btn-aprobar-todo').addEventListener('click', aprobarTodo);
+  document.getElementById('btn-enviar-loggro').addEventListener('click', enviarALoggro);
+
+  async function cargarFacturas() {
+    const filtro = document.getElementById('fact-filtro-estado').value;
+    let query = sb.from('pizzamos_facturas').select('*').order('fecha_factura', { ascending: false });
+    if (filtro) query = query.eq('estado', filtro);
+    const { data, error } = await query;
+    if (error) { toast('Error cargando facturas: ' + error.message, true); return; }
+    FACTURAS = data || [];
+    renderFacturas();
+  }
+
+  function pillEstadoFactura(estado) {
+    const mapa = { pendiente: 'warn', aprobada: 'on', rechazada: 'off' };
+    return mapa[estado] || 'neutral';
+  }
+
+  function etiquetaEstadoFactura(estado) {
+    const mapa = { pendiente: 'Pendiente', aprobada: 'Aprobada', rechazada: 'Rechazada' };
+    return mapa[estado] || (estado || 'Sin estado');
+  }
+
+  function formatMoneda(valor) {
+    const n = Number(valor) || 0;
+    return '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 });
+  }
+
+  function opcionesTipoGasto(actual) {
+    const nombres = TIPOS_GASTO.map(t => t.nombre);
+    let html = '<option value="">— Sin tipo —</option>';
+    html += nombres.map(n => `<option value="${escAttr(n)}" ${actual === n ? 'selected' : ''}>${esc(n)}</option>`).join('');
+    if (actual && !nombres.includes(actual)) {
+      html += `<option value="${escAttr(actual)}" selected>${esc(actual)}</option>`;
+    }
+    return html;
+  }
+
+  function renderFacturas() {
+    const lista = document.getElementById('facturas-lista');
+    if (!FACTURAS.length) {
+      lista.innerHTML = '<div class="empty" style="background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm);">No hay facturas para este filtro.</div>';
+      return;
+    }
+    lista.innerHTML = '';
+    FACTURAS.forEach(f => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); padding:18px 20px;';
+      pintarFactura(card, f);
+      lista.appendChild(card);
+    });
+  }
+
+  function pintarFactura(card, f) {
+    const total = (Number(f.subtotal) || 0) + (Number(f.impuestos) || 0);
+    const fecha = f.fecha_factura ? new Date(f.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'}) : '—';
+    const botonesAccion = f.estado === 'pendiente' ? `
+      <button class="primary" data-aprobar-fact="${f.id}">Aprobar</button>
+      <button class="ghost" data-rechazar-fact="${f.id}">Rechazar</button>
+    ` : '';
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <strong style="font-size:15px;">${esc(f.proveedor_nombre || 'Proveedor sin nombre')}</strong>
+            <span class="pill ${pillEstadoFactura(f.estado)}">${esc(etiquetaEstadoFactura(f.estado))}</span>
+          </div>
+          <div style="font-size:13px; color:var(--texto-suave);">
+            Factura ${esc(f.numero_factura || '—')} · ${fecha}${f.tipo_gasto_nombre ? ' · ' + esc(f.tipo_gasto_nombre) : ''}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:20px; font-weight:800; color:var(--costra-2);">${formatMoneda(total)}</div>
+          <div style="font-size:11px; color:var(--texto-suave);">Subtotal ${formatMoneda(f.subtotal)} + Imp. ${formatMoneda(f.impuestos)}</div>
+        </div>
+      </div>
+      ${f.notas ? `<div style="margin-top:12px; padding:10px 12px; background:#FBE8C6; border:1px solid #E3B769; border-radius:var(--radius-sm); font-size:13px; color:#8A5A12;">⚠ ${esc(f.notas)}</div>` : ''}
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:14px;">
+        <button class="link" data-toggle-fact="${f.id}">Editar ▾</button>
+        ${botonesAccion}
+      </div>
+      <div data-fact-detalle="${f.id}" style="display:none; margin-top:14px; border-top:1px solid var(--linea); padding-top:14px;"></div>
+    `;
+
+    card.querySelector('[data-toggle-fact]').addEventListener('click', () => {
+      const detalle = card.querySelector(`[data-fact-detalle="${f.id}"]`);
+      const abierto = detalle.style.display !== 'none';
+      if (abierto) {
+        detalle.style.display = 'none';
+      } else {
+        detalle.innerHTML = construirFormularioEdicionFactura(f);
+        detalle.style.display = 'block';
+        detalle.querySelector('[data-save-fact]').addEventListener('click', () => guardarFactura(f.id));
+        detalle.querySelector('[data-cancel-fact]').addEventListener('click', () => {
+          detalle.style.display = 'none';
+        });
+      }
+    });
+
+    const aprobarBtn = card.querySelector('[data-aprobar-fact]');
+    if (aprobarBtn) aprobarBtn.addEventListener('click', () => actualizarEstadoFactura(f.id, 'aprobada'));
+    const rechazarBtn = card.querySelector('[data-rechazar-fact]');
+    if (rechazarBtn) rechazarBtn.addEventListener('click', () => actualizarEstadoFactura(f.id, 'rechazada'));
+  }
+
+  function construirFormularioEdicionFactura(f) {
+    const campo = (id, etiqueta, valor, tipo = 'text') => `
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label for="${id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">${esc(etiqueta)}</label>
+        <input type="${tipo}" class="mini" id="${id}" value="${escAttr(valor ?? '')}">
+      </div>`;
+
+    return `
+      <div class="cp-edit-grid" style="margin-bottom:14px;">
+        ${campo(`edf-proveedor-nombre-${f.id}`, 'Proveedor', f.proveedor_nombre)}
+        ${campo(`edf-proveedor-documento-${f.id}`, 'Documento proveedor', f.proveedor_documento)}
+        ${campo(`edf-numero-${f.id}`, 'Número de factura', f.numero_factura)}
+        ${campo(`edf-fecha-${f.id}`, 'Fecha de factura', f.fecha_factura, 'date')}
+        ${campo(`edf-concepto-${f.id}`, 'Concepto', f.concepto)}
+        ${campo(`edf-subtotal-${f.id}`, 'Subtotal', f.subtotal, 'number')}
+        ${campo(`edf-impuestos-${f.id}`, 'Impuestos', f.impuestos, 'number')}
+        ${campo(`edf-forma-pago-${f.id}`, 'Forma de pago', f.forma_pago)}
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label for="edf-tipo-gasto-${f.id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">Tipo de gasto</label>
+          <select class="mini" id="edf-tipo-gasto-${f.id}">${opcionesTipoGasto(f.tipo_gasto_nombre)}</select>
+        </div>
+        ${campo(`edf-notas-${f.id}`, 'Notas', f.notas)}
+      </div>
+      <div>
+        <button class="primary" data-save-fact="${f.id}">Guardar</button>
+        <button class="ghost" data-cancel-fact="${f.id}">Cancelar</button>
+      </div>`;
+  }
+
+  async function guardarFactura(id) {
+    const proveedorNombre = document.getElementById('edf-proveedor-nombre-' + id).value.trim();
+    const proveedorDocumento = document.getElementById('edf-proveedor-documento-' + id).value.trim();
+    const numeroFactura = document.getElementById('edf-numero-' + id).value.trim();
+    const fechaFactura = document.getElementById('edf-fecha-' + id).value;
+    const concepto = document.getElementById('edf-concepto-' + id).value.trim();
+    const subtotal = document.getElementById('edf-subtotal-' + id).value;
+    const impuestos = document.getElementById('edf-impuestos-' + id).value;
+    const formaPago = document.getElementById('edf-forma-pago-' + id).value.trim();
+    const tipoGasto = document.getElementById('edf-tipo-gasto-' + id).value;
+    const notas = document.getElementById('edf-notas-' + id).value.trim();
+
+    const { error } = await sb.from('pizzamos_facturas').update({
+      proveedor_nombre: proveedorNombre || null,
+      proveedor_documento: proveedorDocumento || null,
+      numero_factura: numeroFactura || null,
+      fecha_factura: fechaFactura || null,
+      concepto: concepto || null,
+      subtotal: subtotal === '' ? null : Number(subtotal),
+      impuestos: impuestos === '' ? null : Number(impuestos),
+      forma_pago: formaPago || null,
+      tipo_gasto_nombre: tipoGasto || null,
+      notas: notas || null
+    }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast('Factura actualizada');
+    cargarFacturas();
+  }
+
+  async function actualizarEstadoFactura(id, estado) {
+    const { error } = await sb.from('pizzamos_facturas').update({
+      estado,
+      aprobado_en: new Date().toISOString()
+    }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, true); return; }
+    toast(estado === 'aprobada' ? 'Factura aprobada' : 'Factura rechazada');
+    cargarFacturas();
+  }
+
+  async function aprobarTodo() {
+    const btn = document.getElementById('btn-aprobar-todo');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Aprobando…';
+    try {
+      const { data: pendientes, error } = await sb.from('pizzamos_facturas')
+        .select('id, tipo_gasto_nombre, subtotal, proveedor_nombre')
+        .eq('estado', 'pendiente');
+      if (error) { toast('Error cargando pendientes: ' + error.message, true); return; }
+
+      const completas = (pendientes || []).filter(f =>
+        f.tipo_gasto_nombre != null && f.subtotal != null && f.proveedor_nombre != null
+      );
+      const incompletas = (pendientes || []).length - completas.length;
+
+      if (completas.length) {
+        const { error: errUpd } = await sb.from('pizzamos_facturas').update({
+          estado: 'aprobada',
+          aprobado_en: new Date().toISOString()
+        }).in('id', completas.map(f => f.id));
+        if (errUpd) { toast('Error aprobando facturas: ' + errUpd.message, true); return; }
+      }
+
+      toast(`${completas.length} aprobadas, ${incompletas} quedaron pendientes por datos incompletos`);
+      cargarFacturas();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  }
+
+  function pintarResultadoLoggro(exitosas, fallidas) {
+    const box = document.getElementById('loggro-resultado');
+    if (!fallidas.length) {
+      box.style.cssText = 'display:block; padding:12px 16px; background:white; border:1px solid var(--linea); border-left:4px solid var(--ok); border-radius:var(--radius-sm); font-size:13px;';
+      box.innerHTML = `${esc(String(exitosas))} factura(s) enviada(s) con éxito a Loggro.`;
+      return;
+    }
+    box.style.cssText = 'display:block; padding:12px 16px; background:#FBE8C6; border:1px solid #E3B769; border-radius:var(--radius-sm); font-size:13px; color:#8A5A12;';
+    box.innerHTML = `
+      <div style="font-weight:700; margin-bottom:6px;">${esc(String(exitosas))} enviada(s) con éxito · ${fallidas.length} fallida(s):</div>
+      <ul style="margin:0; padding-left:18px;">
+        ${fallidas.map(f => `<li>Factura #${esc(String(f.id))}: ${esc(f.motivo || 'sin motivo especificado')}</li>`).join('')}
+      </ul>`;
+  }
+
+  async function enviarALoggro() {
+    const btn = document.getElementById('btn-enviar-loggro');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    document.getElementById('loggro-resultado').style.display = 'none';
+    try {
+      const { data, error } = await sb.functions.invoke('enviar-a-loggro', { method: 'POST' });
+      if (error) { toast('Error enviando a Loggro: ' + error.message, true); return; }
+      const fallidas = (data && data.fallidas) || [];
+      const exitosas = (data && data.exitosas != null) ? data.exitosas : 0;
+      pintarResultadoLoggro(exitosas, fallidas);
+      toast(fallidas.length ? `${exitosas} enviadas, ${fallidas.length} fallidas` : `${exitosas} facturas enviadas con éxito`, fallidas.length > 0);
+      cargarFacturas();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
   }
 
   // Cargar contactos cuando se abre esa pestaña la primera vez
