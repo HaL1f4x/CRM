@@ -76,8 +76,8 @@
   }
   h1, h2, h3 { font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-weight: 800; margin: 0; }
 
-  /* --- Pantalla de PIN --- */
-  #pin-screen {
+  /* --- Pantalla de login --- */
+  #login-screen {
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -110,21 +110,20 @@
   }
   .brand h1 { font-size: 22px; letter-spacing: 0.02em; }
   .brand p { color: #C9BBA6; font-size: 13px; margin-top: 4px; font-family: inherit; }
-  #pin-form {
-    display: flex; flex-direction: column; gap: 12px; width: 240px;
+  #login-form {
+    display: flex; flex-direction: column; gap: 12px; width: 280px;
   }
-  #pin-input {
+  #login-form input {
     background: var(--horno-2);
     border: 1px solid #55453590;
     color: var(--masa);
     padding: 14px 16px;
     border-radius: 10px;
-    font-size: 20px;
-    letter-spacing: 0.3em;
-    text-align: center;
+    font-size: 15px;
   }
-  #pin-input:focus { outline: 2px solid var(--costra); }
-  #pin-submit {
+  #login-form input::placeholder { color: #8A7A68; }
+  #login-form input:focus { outline: 2px solid var(--costra); }
+  #login-submit {
     background: var(--costra);
     color: var(--masa);
     border: none;
@@ -134,8 +133,8 @@
     font-weight: 600;
     cursor: pointer;
   }
-  #pin-submit:hover { background: var(--costra-2); }
-  #pin-error { color: #E29B8A; font-size: 13px; text-align: center; min-height: 16px; }
+  #login-submit:hover { background: var(--costra-2); }
+  #login-error { color: #E29B8A; font-size: 13px; text-align: center; min-height: 16px; }
 
   /* --- App --- */
   #app { display: none; min-height: 100vh; }
@@ -299,16 +298,17 @@
 </head>
 <body>
 
-<div id="pin-screen">
+<div id="login-screen">
   <div class="brand">
     <div class="mark"></div>
     <h1>Trepando</h1>
     <p>Panel de administrador — panadería institucional</p>
   </div>
-  <form id="pin-form">
-    <input id="pin-input" type="password" placeholder="••••" autocomplete="off">
-    <button id="pin-submit" type="submit">Entrar</button>
-    <div id="pin-error"></div>
+  <form id="login-form">
+    <input id="login-email" type="email" placeholder="Correo" autocomplete="email" required>
+    <input id="login-password" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+    <button id="login-submit" type="submit">Entrar</button>
+    <div id="login-error"></div>
   </form>
 </div>
 
@@ -316,6 +316,7 @@
   <header class="topbar">
     <h1>Trepando · Administrador</h1>
     <div style="display:flex; align-items:center; gap:14px;">
+      <span id="user-info" style="font-weight:600;"></span>
       <span id="conn-status">conectando…</span>
       <button id="btn-logout" style="background:none; border:1px solid #55453590; color:var(--masa); padding:6px 12px; border-radius:var(--radius-sm); font-size:12px; cursor:pointer; transition:border-color 150ms ease, background-color 150ms ease;">Cerrar sesión</button>
     </div>
@@ -730,35 +731,55 @@
   const SUPABASE_URL = 'https://oimmvztafcehcmphoaxy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_1ZXDKbCgzLLfDYCbQvXzFg_SnsyUvxT';
 
-  // ⚠️ EDITA ESTA LÍNEA para cambiar el PIN de acceso al panel:
-  const PIN_CORRECTO = 'trepando2026';
-
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
   window.sb = sb;
 
-  // ---------- PIN ----------
-  const SESION_KEY = 'trepando_sesion';
+  // ---------- AUTENTICACIÓN ----------
+  let PERFIL = { nombre: null, rol: null };
+  let appIniciada = false;
 
-  const pinForm = document.getElementById('pin-form');
-  pinForm.addEventListener('submit', (e) => {
+  const loginForm = document.getElementById('login-form');
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const val = document.getElementById('pin-input').value.trim();
-    if (val === PIN_CORRECTO) {
-      localStorage.setItem(SESION_KEY, 'valida');
-      document.getElementById('pin-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      initApp();
-    } else {
-      document.getElementById('pin-error').textContent = 'PIN incorrecto, intenta de nuevo.';
-      document.getElementById('pin-input').value = '';
+    document.getElementById('login-error').textContent = '';
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      document.getElementById('login-error').textContent = 'Correo o contraseña incorrectos.';
+      document.getElementById('login-password').value = '';
     }
   });
 
-  document.getElementById('btn-logout').addEventListener('click', () => {
-    localStorage.removeItem(SESION_KEY);
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('pin-screen').style.display = 'flex';
-    document.getElementById('pin-input').value = '';
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    await sb.auth.signOut();
+  });
+
+  async function cargarPerfil(user) {
+    const { data, error } = await sb.from('perfiles').select('nombre, rol').eq('id', user.id).single();
+    PERFIL = (!error && data) ? data : { nombre: null, rol: null };
+    document.getElementById('user-info').textContent = PERFIL.nombre || user.email || '';
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session && session.user) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('login-error').textContent = '';
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-password').value = '';
+      await cargarPerfil(session.user);
+      if (!appIniciada) {
+        appIniciada = true;
+        initApp();
+      }
+    } else {
+      appIniciada = false;
+      PERFIL = { nombre: null, rol: null };
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('user-info').textContent = '';
+    }
   });
 
   // ---------- Tabs ----------
@@ -2283,13 +2304,6 @@
     const d = document.createElement('div');
     d.textContent = str ?? '';
     return d.innerHTML;
-  }
-
-  // ---------- Sesión recordada ----------
-  if (localStorage.getItem(SESION_KEY)) {
-    document.getElementById('pin-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    initApp();
   }
 </script>
 
