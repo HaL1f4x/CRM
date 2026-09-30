@@ -284,6 +284,17 @@
   .row-form input[type="text"], .row-form input[type="tel"] { flex: 1; min-width: 140px; }
 
   .empty { text-align: center; padding: 40px 20px; color: var(--texto-suave); font-size: 13px; }
+
+  /* Patrón lista → detalle (estilo Salesforce): campos editables individualmente + listas relacionadas colapsables */
+  .campos-detalle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 24px; margin-bottom: 26px; max-width: 900px; }
+  .campo-detalle { margin-bottom: 14px; }
+  .campo-detalle-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
+  .campo-detalle-valor { display: flex; align-items: center; gap: 8px; font-size: 14px; min-height: 26px; }
+  .campo-detalle-valor-editando { flex-wrap: wrap; }
+  .campo-detalle-valor input.mini, .campo-detalle-valor select.mini, .campo-detalle-valor textarea.mini { width: auto; min-width: 180px; }
+  button.campo-detalle-lapiz { background: none; border: none; cursor: pointer; color: var(--texto-suave); font-size: 13px; padding: 2px 4px; line-height: 1; }
+  button.campo-detalle-lapiz:hover { color: var(--costra-2); }
+  .lista-relacionada + .lista-relacionada { border-top: 1px solid var(--linea); margin-top: 14px; padding-top: 14px; }
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--horno); color: var(--masa); padding: 12px 20px; border-radius: 10px; font-size: 13px;
@@ -338,6 +349,7 @@
 
     <!-- INICIO / DASHBOARD -->
     <section id="panel-inicio" class="panel active">
+      <div id="pedidos-vista-lista">
       <div class="panel-head">
         <div>
           <h2>Resumen de Pedidos</h2>
@@ -409,6 +421,8 @@
         <button class="primary" onclick="crearPedido()">+ Agregar pedido</button>
       </div>
       <p style="font-size:12px; color:var(--texto-suave);">Si un cliente no aparece con contactos o sedes en las listas, primero agrégaselos en la pestaña "Clientes &amp; Sedes" / "Contactos".</p>
+      </div>
+      <div id="pedidos-vista-detalle" style="display:none;"></div>
     </section>
 
     <!-- PRODUCCIÓN -->
@@ -509,37 +523,45 @@
 
     <!-- CLIENTES -->
     <section id="panel-clientes" class="panel">
-      <div class="panel-head">
-        <div>
-          <h2>Clientes</h2>
-          <p>Empresas que compran a Trepando. Expande una fila para ver o agregar sedes.</p>
+
+      <!-- Vista de LISTA -->
+      <div id="clientes-vista-lista">
+        <div class="panel-head">
+          <div>
+            <h2>Clientes</h2>
+            <p>Empresas que compran a Trepando. Haz clic en un cliente para ver su ficha completa.</p>
+          </div>
+        </div>
+
+        <div class="row-form">
+          <input type="text" id="nc-nombre" placeholder="Nombre de la empresa">
+          <input type="tel" id="nc-telefono" placeholder="Teléfono principal">
+          <input type="text" id="nc-notas" placeholder="Notas (ej. Paga a 30 días)">
+          <button class="primary" onclick="crearCliente()">+ Agregar cliente</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Empresa</th><th>Teléfono</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="tbody-clientes"></tbody>
+          </table>
         </div>
       </div>
 
-      <div class="row-form">
-        <input type="text" id="nc-nombre" placeholder="Nombre de la empresa">
-        <input type="tel" id="nc-telefono" placeholder="Teléfono principal">
-        <input type="text" id="nc-notas" placeholder="Notas (ej. Paga a 30 días)">
-        <button class="primary" onclick="crearCliente()">+ Agregar cliente</button>
-      </div>
-
-      <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr><th>Empresa</th><th>Teléfono</th><th>Notas</th><th>Estado</th><th></th></tr>
-          </thead>
-          <tbody id="tbody-clientes"></tbody>
-        </table>
-      </div>
+      <!-- Vista de DETALLE (estilo Salesforce: campos editables + listas relacionadas) -->
+      <div id="clientes-vista-detalle" style="display:none;"></div>
     </section>
 
 
     <!-- CONTACTOS -->
     <section id="panel-contactos" class="panel">
+      <div id="contactos-vista-lista">
       <div class="panel-head">
         <div>
           <h2>Contactos</h2>
-          <p>Personas que piden por WhatsApp, con su rol y las sedes para las que pueden pedir.</p>
+          <p>Personas que piden por WhatsApp. Haz clic en un nombre para ver su ficha completa.</p>
         </div>
       </div>
 
@@ -554,26 +576,29 @@
       <div style="overflow-x:auto;">
         <table>
           <thead>
-            <tr><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Teléfono</th><th>Sedes asignadas</th><th>Estado</th><th></th></tr>
+            <tr><th>Nombre</th><th>Teléfono</th><th>Rol</th><th>Estado</th></tr>
           </thead>
           <tbody id="tbody-contactos"></tbody>
         </table>
       </div>
+      </div>
+      <div id="contactos-vista-detalle" style="display:none;"></div>
     </section>
 
     <!-- PRODUCTOS -->
     <section id="panel-productos" class="panel">
+      <div id="productos-vista-lista">
       <div class="panel-head">
         <div>
           <h2>Productos</h2>
-          <p>Catálogo de productos que vende Trepando. Activa o desactiva sin borrar el histórico.</p>
+          <p>Catálogo de productos que vende Trepando. Haz clic en un producto para ver su ficha completa.</p>
         </div>
       </div>
 
       <div style="overflow-x:auto;">
         <table>
           <thead>
-            <tr><th>Producto</th><th>Categoría</th><th>Receta vinculada</th><th>Estado</th><th></th></tr>
+            <tr><th>Producto</th><th>Categoría</th><th>Estado</th></tr>
           </thead>
           <tbody id="tbody-productos"></tbody>
         </table>
@@ -584,14 +609,17 @@
         <input type="text" id="np-categoria" placeholder="Categoría (ej. Pan, Bebida)" value="Pan">
         <button class="primary" onclick="crearProducto()">+ Agregar producto</button>
       </div>
+      </div>
+      <div id="productos-vista-detalle" style="display:none;"></div>
     </section>
 
     <!-- CLIENTES POTENCIALES -->
     <section id="panel-potenciales" class="panel">
+      <div id="potenciales-vista-lista">
       <div class="panel-head">
         <div>
           <h2>Clientes potenciales</h2>
-          <p>Leads capturados por el bot de WhatsApp. Usa "Editar" en una fila para modificar sus datos.</p>
+          <p>Leads capturados por el bot de WhatsApp. Haz clic en un nombre para ver su ficha completa.</p>
         </div>
       </div>
 
@@ -634,12 +662,13 @@
               <th>Ciudad</th>
               <th>Tipo de negocio</th>
               <th>Estado</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="tbody-potenciales"></tbody>
         </table>
       </div>
+      </div>
+      <div id="potenciales-vista-detalle" style="display:none;"></div>
     </section>
 
     <!-- ASISTENCIA -->
@@ -809,14 +838,242 @@
   });
 
   // ---------- Tabs ----------
+  function activarPestana(tab) {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+  }
+
   document.querySelectorAll('nav.tabs button').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      activarPestana(btn.dataset.tab);
+      // Si había una vista de detalle abierta (#/ruta/id), volver a la lista al cambiar de pestaña manualmente
+      if (location.hash) history.pushState(null, '', location.pathname + location.search);
+      const ruta = RUTA_POR_PESTANA[btn.dataset.tab];
+      const vista = ruta && VISTAS_LISTA_DETALLE[ruta];
+      if (vista) vista.mostrarLista();
     });
   });
+
+  // ============================================================
+  // PATRÓN "LISTA → DETALLE" (estilo Salesforce) — REUTILIZABLE
+  // ============================================================
+  // Para aplicar este patrón a otra pestaña (ej. "productos"):
+  //  1. HTML: dentro de <section id="panel-productos">, envuelve la tabla
+  //     de lista en un <div id="productos-vista-lista"> y agrega, vacío,
+  //     <div id="productos-vista-detalle" style="display:none;"></div>.
+  //  2. En la tabla de lista, la primera columna debe ser un enlace:
+  //     <a href="#/productos/${p.id}">${nombre}</a> en vez de texto plano.
+  //  3. Escribe mostrarDetalleProducto(id) que:
+  //       - ubica el registro (en el array en memoria, o con una consulta
+  //         si no existe todavía)
+  //       - limpia el contenedor y llama a pintarEncabezadoDetalle(cont, {tab:'productos', titulo, subtitulo})
+  //       - llama a campoEditable(cont, {...}) por cada campo editable
+  //       - llama a listaRelacionada(cont, {...}) por cada lista relacionada
+  //  4. Escribe mostrarListaProductos() que oculta el detalle, muestra la
+  //     lista y llama a tu función de render existente (ej. renderProductos()).
+  //  5. Regístralo una sola vez:
+  //       registrarVistaListaDetalle('productos', {
+  //         mostrarLista: mostrarListaProductos,
+  //         mostrarDetalle: mostrarDetalleProducto
+  //       });
+  //     Si el nombre de la ruta (lo que va en el hash) es distinto del
+  //     data-tab real de la pestaña —ej. "Pedidos" vive en data-tab="inicio"—
+  //     pásalo aparte: registrarVistaListaDetalle('pedidos', { ..., panelTab: 'inicio' }).
+  // Con esto, el enrutador de hash (#/ruta/id), la sincronización con las
+  // pestañas y el botón "← Volver a la lista" ya funcionan solos.
+  // Para un campo relacionado que solo debe navegar (no editarse ahí mismo,
+  // ej. el contacto o el producto de un pedido), usa campoEnlace(...) en vez
+  // de campoEditable(...).
+  // ============================================================
+
+  const VISTAS_LISTA_DETALLE = {}; // { ruta: { mostrarLista(), mostrarDetalle(id), panelTab } }
+  const RUTA_POR_PESTANA = {}; // { panelTab: ruta } — solo hace falta cuando difieren (ej. "pedidos" vive en la pestaña "inicio")
+
+  // `ruta` es el segmento usado en el hash (#/ruta/id). `panelTab` es la pestaña
+  // real (data-tab / panel-XXX) donde vive esa vista; por defecto es igual a `ruta`.
+  function registrarVistaListaDetalle(ruta, { mostrarLista, mostrarDetalle, panelTab = ruta }) {
+    VISTAS_LISTA_DETALLE[ruta] = { mostrarLista, mostrarDetalle, panelTab };
+    RUTA_POR_PESTANA[panelTab] = ruta;
+  }
+
+  // Refresca la vista de detalle de "ruta" solo si es la que está abierta ahora mismo
+  // (para usar después de una acción sobre una lista relacionada, ej. agregar una sede).
+  function refrescarDetalleSiAbierto(ruta, id) {
+    if (location.hash === `#/${ruta}/${id}`) {
+      VISTAS_LISTA_DETALLE[ruta].mostrarDetalle(id);
+    }
+  }
+
+  function volverALista(ruta) {
+    if (location.hash.startsWith(`#/${ruta}/`)) {
+      history.pushState(null, '', location.pathname + location.search);
+    }
+    const vista = VISTAS_LISTA_DETALLE[ruta];
+    if (vista) vista.mostrarLista();
+  }
+
+  function procesarHash() {
+    const m = location.hash.match(/^#\/([a-z0-9_-]+)\/(\d+)$/i);
+    if (m) {
+      const [, ruta, id] = m;
+      const vista = VISTAS_LISTA_DETALLE[ruta];
+      if (vista) {
+        activarPestana(vista.panelTab);
+        vista.mostrarDetalle(Number(id));
+        return;
+      }
+    }
+    // Sin hash de detalle (ej. el usuario usó "atrás" del navegador): muestra la
+    // lista de la pestaña activa, si esa pestaña usa este patrón.
+    const tabActivo = document.querySelector('nav.tabs button.active')?.dataset.tab;
+    const rutaActiva = tabActivo && RUTA_POR_PESTANA[tabActivo];
+    const vistaActiva = rutaActiva && VISTAS_LISTA_DETALLE[rutaActiva];
+    if (vistaActiva) vistaActiva.mostrarLista();
+  }
+  window.addEventListener('hashchange', procesarHash);
+
+  // Campo individual editable dentro de una vista de detalle: se muestra
+  // como texto + ícono de lápiz; al hacer clic se convierte en un input
+  // con Guardar/Cancelar. `onGuardar(nuevoValor)` debe devolver true si el
+  // guardado fue exitoso (para reflejar el nuevo valor) o false si falló
+  // (se queda en modo edición para que el usuario corrija).
+  function campoEditable(contenedor, { etiqueta, valor, tipo = 'text', opcionesSelect = null, formatoVista = null, onGuardar }) {
+    const fila = document.createElement('div');
+    fila.className = 'campo-detalle';
+    contenedor.appendChild(fila);
+    pintarVista();
+
+    function pintarVista() {
+      const mostrado = formatoVista
+        ? formatoVista(valor)
+        : ((valor === null || valor === undefined || valor === '') ? '—' : esc(String(valor)));
+      fila.innerHTML = `
+        <div class="campo-detalle-label">${esc(etiqueta)}</div>
+        <div class="campo-detalle-valor">
+          <span>${mostrado}</span>
+          <button class="campo-detalle-lapiz" type="button" title="Editar ${escAttr(etiqueta)}">✎</button>
+        </div>`;
+      fila.querySelector('.campo-detalle-lapiz').addEventListener('click', pintarEdicion);
+    }
+
+    function pintarEdicion() {
+      let inputHtml;
+      if (opcionesSelect) {
+        inputHtml = `<select class="mini" data-campo-input>` +
+          opcionesSelect.map(o => `<option value="${escAttr(String(o.value))}" ${String(o.value) === String(valor) ? 'selected' : ''}>${esc(o.label)}</option>`).join('') +
+          `</select>`;
+      } else if (tipo === 'textarea') {
+        inputHtml = `<textarea class="mini" data-campo-input rows="2" style="width:100%;">${esc(valor ?? '')}</textarea>`;
+      } else {
+        inputHtml = `<input type="${tipo}" class="mini" data-campo-input value="${escAttr(valor ?? '')}">`;
+      }
+      fila.innerHTML = `
+        <div class="campo-detalle-label">${esc(etiqueta)}</div>
+        <div class="campo-detalle-valor campo-detalle-valor-editando">
+          ${inputHtml}
+          <button class="link" data-campo-guardar type="button">Guardar</button>
+          <button class="link" data-campo-cancelar type="button">Cancelar</button>
+        </div>`;
+      fila.querySelector('[data-campo-cancelar]').addEventListener('click', pintarVista);
+      fila.querySelector('[data-campo-guardar]').addEventListener('click', async () => {
+        const inputEl = fila.querySelector('[data-campo-input]');
+        const nuevoValor = inputEl.value;
+        const btnGuardar = fila.querySelector('[data-campo-guardar]');
+        btnGuardar.disabled = true;
+        const ok = await onGuardar(nuevoValor);
+        if (ok) {
+          valor = nuevoValor;
+          pintarVista();
+        } else {
+          btnGuardar.disabled = false;
+        }
+      });
+    }
+  }
+
+  // Sección colapsable de una lista relacionada (ej. los pedidos de un
+  // cliente) dentro de una vista de detalle. `columnas` es un array de
+  // { titulo, campo } o { titulo, render(registro) } para columnas
+  // calculadas. `extraHTML` permite agregar, por ejemplo, un mini-formulario
+  // para crear un registro relacionado nuevo. Devuelve el contenedor para
+  // que el llamador pueda enganchar sus propios listeners (botones de
+  // "Quitar", el formulario de "+ Agregar", etc.).
+  function listaRelacionada(contenedor, { titulo, registros, columnas, filaVacia = 'Sin registros.', extraHTML = '' }) {
+    const wrap = document.createElement('div');
+    wrap.className = 'lista-relacionada';
+    contenedor.appendChild(wrap);
+
+    wrap.innerHTML = `
+      <button class="link lista-relacionada-toggle" type="button"></button>
+      <div class="lista-relacionada-body" style="display:none;"></div>`;
+    const toggleBtn = wrap.querySelector('.lista-relacionada-toggle');
+    const cuerpo = wrap.querySelector('.lista-relacionada-body');
+
+    let abierto = false;
+    function actualizarTextoToggle() {
+      toggleBtn.textContent = `${titulo} (${registros.length}) ${abierto ? '▴' : '▾'}`;
+    }
+    actualizarTextoToggle();
+
+    toggleBtn.addEventListener('click', () => {
+      abierto = !abierto;
+      cuerpo.style.display = abierto ? 'block' : 'none';
+      actualizarTextoToggle();
+    });
+
+    if (!registros.length) {
+      cuerpo.innerHTML = `<p class="empty" style="padding:12px 0;">${esc(filaVacia)}</p>${extraHTML}`;
+    } else {
+      cuerpo.innerHTML = `
+        <div style="overflow-x:auto; margin-top:10px;">
+          <table>
+            <thead><tr>${columnas.map(col => `<th>${esc(col.titulo)}</th>`).join('')}</tr></thead>
+            <tbody>
+              ${registros.map(r => `<tr>${columnas.map(col => `<td>${col.render ? col.render(r) : esc(r[col.campo] ?? '—')}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${extraHTML}`;
+    }
+    return wrap;
+  }
+
+  // Encabezado estándar de una vista de detalle, con el botón de volver a la lista.
+  function pintarEncabezadoDetalle(contenedor, { tab, titulo, subtitulo = '' }) {
+    const header = document.createElement('div');
+    header.className = 'panel-head';
+    header.innerHTML = `
+      <div>
+        <button class="link" data-volver-lista type="button">← Volver a la lista</button>
+        <h2 style="margin-top:6px;">${esc(titulo)}</h2>
+        ${subtitulo ? `<p>${esc(subtitulo)}</p>` : ''}
+      </div>`;
+    header.querySelector('[data-volver-lista]').addEventListener('click', () => volverALista(tab));
+    contenedor.appendChild(header);
+  }
+
+  // Campo de solo navegación dentro de una vista de detalle (ej. el contacto
+  // o el producto de un pedido): se ve igual que un campo, pero en vez de
+  // lápiz de edición es un enlace a la ficha de ESE otro registro.
+  function campoEnlace(contenedor, { etiqueta, texto, href }) {
+    const fila = document.createElement('div');
+    fila.className = 'campo-detalle';
+    fila.innerHTML = `
+      <div class="campo-detalle-label">${esc(etiqueta)}</div>
+      <div class="campo-detalle-valor"><a href="${escAttr(href)}">${esc(texto)}</a></div>`;
+    contenedor.appendChild(fila);
+  }
+
+  // Campo de solo lectura dentro de una vista de detalle (ej. una marca de
+  // tiempo generada automáticamente): sin lápiz de edición ni enlace.
+  function campoTexto(contenedor, { etiqueta, texto }) {
+    const fila = document.createElement('div');
+    fila.className = 'campo-detalle';
+    fila.innerHTML = `
+      <div class="campo-detalle-label">${esc(etiqueta)}</div>
+      <div class="campo-detalle-valor">${esc(texto)}</div>`;
+    contenedor.appendChild(fila);
+  }
 
   // Recargar pedidos cada vez que se entra a la pestaña "Pedidos", para reflejar cambios hechos en otras pestañas
   document.querySelector('[data-tab="inicio"]').addEventListener('click', () => {
@@ -843,6 +1100,9 @@
   let chartTendencia = null;
   let FACTURAS = [];
   let TIPOS_GASTO = [];
+  let PROVEEDORES = [];
+  let FORMULAS = [];
+  let PRESENTACIONES = [];
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
   let rangoAsistDesde, rangoAsistHasta;
@@ -856,11 +1116,13 @@
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
     document.getElementById('en-fecha').value = toISODate(hoy);
-    await Promise.all([cargarProductos(), cargarClienteProducto(), cargarClientesPotenciales(), cargarTiposGasto()]);
+    await Promise.all([cargarFormulas(), cargarPresentaciones(), cargarClienteProducto(), cargarClientesPotenciales(), cargarTiposGasto(), cargarProveedores()]);
+    await cargarProductos();
     await cargarClientes();
     await cargarContactos();
     await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia(), cargarAnalisis(), cargarFacturas()]);
     document.getElementById('conn-status').textContent = 'conectado';
+    procesarHash(); // soporta abrir la app directo en un link de detalle, ej. #/clientes/123
   }
 
   async function cargarClienteProducto() {
@@ -977,9 +1239,10 @@
             if (diferencia > 0) diferenciaStyle = 'color:var(--costra-2); font-weight:600;';
             else if (diferencia < 0) diferenciaStyle = 'color:var(--error); font-weight:600;';
           }
+          const fechaTxt = p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short'}) : '—';
           return `
           <tr>
-            <td>${p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short'}) : '—'}</td>
+            <td><a href="#/pedidos/${p.id}">${fechaTxt}</a></td>
             <td>${esc(p.hora_entrega || '—')}</td>
             <td>${esc(p.contactos?.clientes?.nombre || '—')}</td>
             <td>${esc(p.sedes?.nombre || '—')}</td>
@@ -1015,6 +1278,149 @@
     if (p) p.estado = estado;
     toast('Estado actualizado');
   }
+
+  function mostrarListaPedidos() {
+    document.getElementById('pedidos-vista-detalle').style.display = 'none';
+    document.getElementById('pedidos-vista-lista').style.display = 'block';
+    renderDashboard();
+  }
+
+  // Vista de DETALLE de un pedido: sin listas relacionadas (los pedidos no
+  // tienen "hijos"); el contacto y el producto son solo enlaces de navegación.
+  async function mostrarDetallePedido(id) {
+    document.getElementById('pedidos-vista-lista').style.display = 'none';
+    const cont = document.getElementById('pedidos-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
+
+    let p = PEDIDOS.find(x => x.id === id);
+    if (!p) {
+      const { data, error } = await sb.from('pedidos')
+        .select('*, productos(nombre), sedes(nombre), contactos(nombre, clientes(nombre))')
+        .eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Este pedido no existe o fue eliminado.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'pedidos', titulo: 'Pedido no encontrado' });
+        return;
+      }
+      p = data;
+    }
+
+    cont.innerHTML = '';
+    const fechaTitulo = p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : 'sin fecha';
+    pintarEncabezadoDetalle(cont, { tab: 'pedidos', titulo: `Pedido #${p.id}`, subtitulo: `Entrega ${fechaTitulo} — ${p.contactos?.clientes?.nombre || 'sin cliente'}` });
+
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    campoEnlace(camposWrap, {
+      etiqueta: 'Contacto',
+      texto: p.contactos?.nombre || '—',
+      href: `#/contactos/${p.contacto_id}`
+    });
+
+    campoEnlace(camposWrap, {
+      etiqueta: 'Producto',
+      texto: p.productos?.nombre || '—',
+      href: `#/productos/${p.producto_id}`
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Sede',
+      valor: p.sede_id ?? '',
+      opcionesSelect: SEDES.map(s => ({ value: s.id, label: s.nombre })),
+      formatoVista: () => esc(SEDES.find(s => s.id === p.sede_id)?.nombre || '—'),
+      onGuardar: async (nuevo) => {
+        const sedeId = nuevo === '' ? null : Number(nuevo);
+        const { error } = await sb.from('pedidos').update({ sede_id: sedeId }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.sede_id = sedeId;
+        toast('Pedido actualizado');
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Cantidad',
+      valor: p.cantidad,
+      tipo: 'number',
+      onGuardar: async (nuevo) => {
+        const cantidad = nuevo === '' ? null : Number(nuevo);
+        const { error } = await sb.from('pedidos').update({ cantidad }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.cantidad = cantidad;
+        toast('Pedido actualizado');
+        renderDashboard();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Fecha de entrega',
+      valor: p.fecha_entrega,
+      tipo: 'date',
+      formatoVista: (v) => v ? esc(new Date(v + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })) : '—',
+      onGuardar: async (nuevo) => {
+        const { error } = await sb.from('pedidos').update({ fecha_entrega: nuevo || null }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.fecha_entrega = nuevo || null;
+        toast('Pedido actualizado');
+        renderDashboard();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Hora de entrega',
+      valor: p.hora_entrega,
+      tipo: 'time',
+      onGuardar: async (nuevo) => {
+        const { error } = await sb.from('pedidos').update({ hora_entrega: nuevo || null }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.hora_entrega = nuevo || null;
+        toast('Pedido actualizado');
+        renderDashboard();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Estado',
+      valor: p.estado === 'Entregado' ? 'Entregado' : 'Pendiente',
+      opcionesSelect: [{ value: 'Pendiente', label: 'Pendiente' }, { value: 'Entregado', label: 'Entregado' }],
+      formatoVista: (v) => `<span class="pill ${v === 'Entregado' ? 'on' : 'off'}">${esc(v)}</span>`,
+      onGuardar: async (nuevo) => {
+        const { error } = await sb.from('pedidos').update({ estado: nuevo }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.estado = nuevo;
+        toast('Pedido actualizado');
+        renderDashboard();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Nota',
+      valor: p.nota,
+      tipo: 'textarea',
+      onGuardar: async (nuevo) => {
+        const nota = nuevo.trim();
+        const { error } = await sb.from('pedidos').update({ nota: nota || null }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.nota = nota || null;
+        toast('Pedido actualizado');
+        return true;
+      }
+    });
+
+    campoTexto(camposWrap, {
+      etiqueta: 'Creado',
+      texto: p.timestamp ? new Date(p.timestamp).toLocaleString('es-CO') : '—'
+    });
+  }
+
+  registrarVistaListaDetalle('pedidos', { mostrarLista: mostrarListaPedidos, mostrarDetalle: mostrarDetallePedido, panelTab: 'inicio' });
 
   function poblarSelectPedidoForm() {
     const selCliente = document.getElementById('np-cliente');
@@ -1330,141 +1736,205 @@
     poblarSelectClientes();
   }
 
+  // Vista de LISTA: tabla simple, la primera columna navega a la vista de detalle (#/clientes/id)
   function renderClientes() {
     const tbody = document.getElementById('tbody-clientes');
-    if (!CLIENTES.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Aún no hay clientes. Agrega el primero arriba.</td></tr>'; return; }
-    tbody.innerHTML = '';
-    CLIENTES.forEach(c => {
-      const sedesDeCliente = SEDES.filter(s => s.cliente_id === c.id);
-      const tr = document.createElement('tr');
-      tr.dataset.rowFor = c.id;
-      pintarFilaCliente(tr, c);
-      tbody.appendChild(tr);
+    if (!CLIENTES.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Aún no hay clientes. Agrega el primero arriba.</td></tr>'; return; }
+    tbody.innerHTML = CLIENTES.map(c => `
+      <tr>
+        <td><a href="#/clientes/${c.id}"><strong>${esc(c.nombre)}</strong></a></td>
+        <td>${esc(c.telefono_principal || '—')}</td>
+        <td><span class="pill ${c.activo === false ? 'off' : 'on'}">${c.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      </tr>`).join('');
+  }
 
-      const subTr = document.createElement('tr');
-      subTr.className = 'subrow';
-      subTr.style.display = 'none';
-      subTr.setAttribute('data-sub-for', c.id);
-      const sedesList = sedesDeCliente.map(s => `
-        <li data-sede-li="${s.id}">
-          <span data-sede-view="${s.id}">${esc(s.nombre)} <button class="link" data-sede-edit="${s.id}">Editar</button></span>
-        </li>`).join('') || '<li style="color:var(--texto-suave)">Sin sedes aún</li>';
+  function mostrarListaClientes() {
+    document.getElementById('clientes-vista-detalle').style.display = 'none';
+    document.getElementById('clientes-vista-lista').style.display = 'block';
+    renderClientes();
+  }
 
-      const productosCliente = CLIENTE_PRODUCTO.filter(cp => cp.cliente_id === c.id);
-      const productosList = productosCliente.map(cp => {
-        const prod = PRODUCTOS.find(p => p.id === cp.producto_id);
-        const sedeNombre = cp.sede_id ? (SEDES.find(s => s.id === cp.sede_id)?.nombre || '—') : 'Todas las sedes';
-        return `<li data-cp-li="${cp.id}">
-          ${esc(prod ? prod.nombre : 'Producto eliminado')} — ${esc(sedeNombre)}
-          <button class="link" data-cp-delete="${cp.id}">Quitar</button>
-        </li>`;
-      }).join('') || '<li style="color:var(--texto-suave)">Sin productos habilitados aún</li>';
-      const opcionesProductosCP = '<option value="">Producto…</option>' + PRODUCTOS.filter(p => p.activo !== false).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
-      const opcionesSedesCP = '<option value="">Todas las sedes</option>' + sedesDeCliente.map(s => `<option value="${s.id}">${esc(s.nombre)}</option>`).join('');
+  // Vista de DETALLE: campos editables individualmente + listas relacionadas (Sedes, Productos habilitados, Contactos, Pedidos)
+  async function mostrarDetalleCliente(id) {
+    document.getElementById('clientes-vista-lista').style.display = 'none';
+    const cont = document.getElementById('clientes-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
 
-      const subTd = document.createElement('td');
-      subTd.colSpan = 5;
-      subTd.innerHTML = `
-        <ul style="margin:0 0 8px 16px; padding:0;">${sedesList}</ul>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <input type="text" class="mini" style="width:200px" placeholder="Nombre de la sede nueva" id="sede-input-${c.id}">
-          <button class="ghost" onclick="agregarSede(${c.id})">+ Agregar sede</button>
-        </div>
-        <div style="font-size:12px; font-weight:600; color:var(--texto-suave); margin:16px 0 6px;">Productos habilitados</div>
-        <ul style="margin:0 0 8px 16px; padding:0;">${productosList}</ul>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    let c = CLIENTES.find(x => x.id === id);
+    if (!c) {
+      const { data, error } = await sb.from('clientes').select('*').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Este cliente no existe o fue eliminado.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'clientes', titulo: 'Cliente no encontrado' });
+        return;
+      }
+      c = data;
+    }
+
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'clientes', titulo: c.nombre, subtitulo: 'Ficha de cliente' });
+
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Nombre de la empresa',
+      valor: c.nombre,
+      onGuardar: async (nuevo) => {
+        const nombre = nuevo.trim();
+        if (!nombre) { toast('El nombre no puede quedar vacío', true); return false; }
+        const { error } = await sb.from('clientes').update({ nombre }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c.nombre = nombre;
+        cont.querySelector('.panel-head h2').textContent = nombre;
+        toast('Cliente actualizado');
+        renderClientes();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Teléfono principal',
+      valor: c.telefono_principal,
+      tipo: 'tel',
+      onGuardar: async (nuevo) => {
+        const telefono = nuevo.trim();
+        const { error } = await sb.from('clientes').update({ telefono_principal: telefono || null }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c.telefono_principal = telefono || null;
+        toast('Cliente actualizado');
+        renderClientes();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Estado',
+      valor: c.activo === false ? 'false' : 'true',
+      opcionesSelect: [{ value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }],
+      formatoVista: (v) => `<span class="pill ${v === 'false' ? 'off' : 'on'}">${v === 'false' ? 'Inactivo' : 'Activo'}</span>`,
+      onGuardar: async (nuevo) => {
+        const activo = nuevo === 'true';
+        const { error } = await sb.from('clientes').update({ activo }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c.activo = activo;
+        toast('Cliente actualizado');
+        renderClientes();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Fecha de inicio',
+      valor: c.fecha_inicio,
+      tipo: 'date',
+      formatoVista: (v) => v ? esc(new Date(v + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })) : '—',
+      onGuardar: async (nuevo) => {
+        const { error } = await sb.from('clientes').update({ fecha_inicio: nuevo || null }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c.fecha_inicio = nuevo || null;
+        toast('Cliente actualizado');
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Notas',
+      valor: c.notas,
+      tipo: 'textarea',
+      onGuardar: async (nuevo) => {
+        const notas = nuevo.trim();
+        const { error } = await sb.from('clientes').update({ notas: notas || null }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c.notas = notas || null;
+        toast('Cliente actualizado');
+        return true;
+      }
+    });
+
+    // ---- Listas relacionadas ----
+    const relacionadasWrap = document.createElement('div');
+    relacionadasWrap.style.marginTop = '8px';
+    cont.appendChild(relacionadasWrap);
+
+    const sedesCliente = SEDES.filter(s => s.cliente_id === c.id);
+    const wrapSedes = listaRelacionada(relacionadasWrap, {
+      titulo: 'Sedes',
+      registros: sedesCliente,
+      columnas: [{ titulo: 'Nombre', campo: 'nombre' }],
+      filaVacia: 'Este cliente aún no tiene sedes registradas.',
+      extraHTML: `
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+          <input type="text" class="mini" style="width:220px" placeholder="Nombre de la sede nueva" id="detalle-sede-input-${c.id}">
+          <button class="ghost" type="button" data-agregar-sede>+ Agregar sede</button>
+        </div>`
+    });
+    wrapSedes.querySelector('[data-agregar-sede]').addEventListener('click', () => agregarSedeDesdeDetalle(c.id));
+
+    const productosCliente = CLIENTE_PRODUCTO.filter(cp => cp.cliente_id === c.id);
+    const opcionesProductosCP = '<option value="">Producto…</option>' + PRODUCTOS.filter(p => p.activo !== false).map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+    const opcionesSedesCP = '<option value="">Todas las sedes</option>' + sedesCliente.map(s => `<option value="${s.id}">${esc(s.nombre)}</option>`).join('');
+    const wrapProductos = listaRelacionada(relacionadasWrap, {
+      titulo: 'Productos habilitados',
+      registros: productosCliente,
+      columnas: [
+        { titulo: 'Producto', render: (cp) => esc(PRODUCTOS.find(p => p.id === cp.producto_id)?.nombre || 'Producto eliminado') },
+        { titulo: 'Sede', render: (cp) => esc(cp.sede_id ? (sedesCliente.find(s => s.id === cp.sede_id)?.nombre || '—') : 'Todas las sedes') },
+        { titulo: '', render: (cp) => `<button class="link" data-quitar-cp="${cp.id}">Quitar</button>` }
+      ],
+      filaVacia: 'Este cliente aún no tiene productos habilitados.',
+      extraHTML: `
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;">
           <select class="mini" id="cp-producto-${c.id}" style="min-width:160px;">${opcionesProductosCP}</select>
           <input type="text" class="mini" style="width:180px" placeholder="o crea un producto nuevo" id="cp-producto-nuevo-${c.id}">
           <select class="mini" id="cp-sede-${c.id}" style="min-width:140px;">${opcionesSedesCP}</select>
-          <button class="ghost" onclick="agregarClienteProducto(${c.id})">+ Asociar producto</button>
-        </div>
-      `;
-      subTr.appendChild(subTd);
-      tbody.appendChild(subTr);
+          <button class="ghost" type="button" data-agregar-cp>+ Asociar producto</button>
+        </div>`
+    });
+    wrapProductos.querySelectorAll('[data-quitar-cp]').forEach(btn => {
+      btn.addEventListener('click', () => quitarClienteProducto(Number(btn.dataset.quitarCp)));
+    });
+    wrapProductos.querySelector('[data-agregar-cp]').addEventListener('click', () => agregarClienteProducto(c.id));
 
-      sedesDeCliente.forEach(s => {
-        const li = subTd.querySelector(`li[data-sede-li="${s.id}"]`);
-        li.querySelector('[data-sede-edit]').addEventListener('click', () => {
-          const span = li.querySelector('[data-sede-view]');
-          span.innerHTML = `
-            <input type="text" class="mini" style="width:160px" id="sede-ed-${s.id}" value="${escAttr(s.nombre)}">
-            <button class="link" data-sede-save="${s.id}">Guardar</button>
-            <button class="link" data-sede-cancel="${s.id}">Cancelar</button>
-          `;
-          span.querySelector('[data-sede-save]').addEventListener('click', () => guardarSede(s.id));
-          span.querySelector('[data-sede-cancel]').addEventListener('click', () => cargarClientes());
-        });
-      });
+    const contactosCliente = CONTACTOS.filter(k => k.cliente_id === c.id);
+    listaRelacionada(relacionadasWrap, {
+      titulo: 'Contactos',
+      registros: contactosCliente,
+      columnas: [
+        { titulo: 'Nombre', campo: 'nombre' },
+        { titulo: 'Teléfono', campo: 'telefono' },
+        { titulo: 'Rol', campo: 'rol' }
+      ],
+      filaVacia: 'Este cliente aún no tiene contactos registrados.'
+    });
 
-      productosCliente.forEach(cp => {
-        const li = subTd.querySelector(`li[data-cp-li="${cp.id}"]`);
-        if (li) li.querySelector('[data-cp-delete]').addEventListener('click', () => quitarClienteProducto(cp.id));
-      });
-
+    // Pedidos: pedidos.contacto_id → contactos.id → contactos.cliente_id
+    const contactoIds = contactosCliente.map(k => k.id);
+    let pedidosCliente = [];
+    if (contactoIds.length) {
+      const { data, error } = await sb.from('pedidos')
+        .select('id, fecha_entrega, cantidad, estado, productos(nombre)')
+        .in('contacto_id', contactoIds)
+        .order('fecha_entrega', { ascending: false });
+      if (error) { toast('Error cargando pedidos del cliente: ' + error.message, true); }
+      pedidosCliente = data || [];
+    }
+    listaRelacionada(relacionadasWrap, {
+      titulo: 'Pedidos',
+      registros: pedidosCliente,
+      columnas: [
+        { titulo: 'Fecha entrega', render: (p) => p.fecha_entrega ? esc(new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })) : '—' },
+        { titulo: 'Producto', render: (p) => esc(p.productos?.nombre || '—') },
+        { titulo: 'Cantidad', campo: 'cantidad' },
+        { titulo: 'Estado', render: (p) => `<span class="pill ${p.estado === 'Entregado' ? 'on' : 'off'}">${esc(p.estado || 'Pendiente')}</span>` }
+      ],
+      filaVacia: 'Este cliente aún no tiene pedidos registrados.'
     });
   }
 
-  window.guardarSede = async function(id) {
-    const nombre = document.getElementById('sede-ed-' + id).value.trim();
-    if (!nombre) { toast('El nombre de la sede no puede quedar vacío', true); return; }
-    const { error } = await sb.from('sedes').update({ nombre }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast('Sede actualizada');
-    cargarClientes();
-  };
-
-  function pintarFilaCliente(tr, c) {
-    const sedesDeCliente = SEDES.filter(s => s.cliente_id === c.id);
-    tr.innerHTML = `
-      <td><button class="link" data-edit="${c.id}">Editar</button> &nbsp;<strong>${esc(c.nombre)}</strong></td>
-      <td>${esc(c.telefono_principal || '—')}</td>
-      <td>${esc(c.notas || '—')}</td>
-      <td><span class="pill ${c.activo === false ? 'off' : 'on'}">${c.activo === false ? 'Inactivo' : 'Activo'}</span></td>
-      <td style="white-space:nowrap;">
-        <button class="link" data-toggle="${c.id}">${sedesDeCliente.length} sede(s) ▾</button>
-      </td>
-    `;
-    tr.querySelector('[data-toggle]').addEventListener('click', () => {
-      const subTr = document.querySelector(`tr[data-sub-for="${c.id}"]`);
-      subTr.style.display = subTr.style.display === 'none' ? 'table-row' : 'none';
-    });
-    tr.querySelector('[data-edit]').addEventListener('click', () => pintarFilaClienteEdicion(tr, c));
-  }
-
-  function pintarFilaClienteEdicion(tr, c) {
-    tr.innerHTML = `
-      <td><input type="text" class="mini" id="ed-nombre-${c.id}" value="${escAttr(c.nombre)}"></td>
-      <td><input type="tel" class="mini" id="ed-telefono-${c.id}" value="${escAttr(c.telefono_principal || '')}"></td>
-      <td><input type="text" class="mini" id="ed-notas-${c.id}" value="${escAttr(c.notas || '')}"></td>
-      <td>
-        <select class="mini" id="ed-activo-${c.id}">
-          <option value="true" ${c.activo !== false ? 'selected' : ''}>Activo</option>
-          <option value="false" ${c.activo === false ? 'selected' : ''}>Inactivo</option>
-        </select>
-      </td>
-      <td style="white-space:nowrap;">
-        <button class="link" data-save="${c.id}">Guardar</button>
-        &nbsp;·&nbsp;
-        <button class="link" data-cancel="${c.id}">Cancelar</button>
-      </td>
-    `;
-    tr.querySelector('[data-save]').addEventListener('click', () => guardarCliente(c.id));
-    tr.querySelector('[data-cancel]').addEventListener('click', () => { pintarFilaCliente(tr, c); });
-  }
-
-  async function guardarCliente(id) {
-    const nombre = document.getElementById('ed-nombre-' + id).value.trim();
-    const telefono = document.getElementById('ed-telefono-' + id).value.trim();
-    const notas = document.getElementById('ed-notas-' + id).value.trim();
-    const activo = document.getElementById('ed-activo-' + id).value === 'true';
-    if (!nombre) { toast('El nombre no puede quedar vacío', true); return; }
-    const { error } = await sb.from('clientes').update({
-      nombre, telefono_principal: telefono || null, notas: notas || null, activo
-    }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast('Cliente actualizado');
-    cargarClientes();
-  }
+  registrarVistaListaDetalle('clientes', { mostrarLista: mostrarListaClientes, mostrarDetalle: mostrarDetalleCliente });
 
   function escAttr(str) {
     return esc(str).replace(/"/g, '&quot;');
@@ -1484,15 +1954,15 @@
     cargarClientes();
   };
 
-  window.agregarSede = async function(clienteId) {
-    const input = document.getElementById('sede-input-' + clienteId);
+  window.agregarSedeDesdeDetalle = async function(clienteId) {
+    const input = document.getElementById('detalle-sede-input-' + clienteId);
     const nombre = input.value.trim();
     if (!nombre) { toast('Ponle un nombre a la sede', true); return; }
     const { error } = await sb.from('sedes').insert({ cliente_id: clienteId, nombre });
     if (error) { toast('Error: ' + error.message, true); return; }
-    input.value = '';
     toast('Sede agregada');
-    cargarClientes();
+    await cargarClientes();
+    refrescarDetalleSiAbierto('clientes', clienteId);
   };
 
   window.agregarClienteProducto = async function(clienteId) {
@@ -1517,14 +1987,17 @@
     await cargarProductos();
     await cargarClienteProducto();
     cargarClientes();
+    refrescarDetalleSiAbierto('clientes', clienteId);
   };
 
   window.quitarClienteProducto = async function(id) {
+    const cp = CLIENTE_PRODUCTO.find(x => x.id === id);
     const { error } = await sb.from('cliente_producto').delete().eq('id', id);
     if (error) { toast('Error: ' + error.message, true); return; }
     toast('Producto desasociado');
     await cargarClienteProducto();
     cargarClientes();
+    if (cp) refrescarDetalleSiAbierto('clientes', cp.cliente_id);
   };
 
   function poblarSelectClientes() {
@@ -1559,39 +2032,169 @@
     renderContactos();
   }
 
+  // Vista de LISTA
   function renderContactos() {
     const tbody = document.getElementById('tbody-contactos');
-    if (!CONTACTOS.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Aún no hay contactos.</td></tr>'; return; }
-    tbody.innerHTML = '';
-    CONTACTOS.forEach(k => {
-      const tr = document.createElement('tr');
-      tr.dataset.rowFor = k.id;
-      pintarFilaContacto(tr, k);
-      tbody.appendChild(tr);
+    if (!CONTACTOS.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Aún no hay contactos.</td></tr>'; return; }
+    tbody.innerHTML = CONTACTOS.map(k => `
+      <tr>
+        <td><a href="#/contactos/${k.id}"><strong>${esc(k.nombre)}</strong></a></td>
+        <td>${esc(k.telefono || '—')}</td>
+        <td>${esc(k.rol || '—')}</td>
+        <td><span class="pill ${k.activo === false ? 'off' : 'on'}">${k.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      </tr>`).join('');
+  }
 
-      const subTr = document.createElement('tr');
-      subTr.className = 'subrow';
-      subTr.style.display = 'none';
-      subTr.setAttribute('data-sub-k-for', k.id);
-      const sedesDelCliente = SEDES.filter(s => s.cliente_id === k.cliente_id);
-      const asignadasIds = CONTACTO_SEDE.filter(cs => cs.contacto_id === k.id).map(cs => cs.sede_id);
-      const subTd = document.createElement('td');
-      subTd.colSpan = 7;
-      subTd.innerHTML = sedesDelCliente.length
-        ? sedesDelCliente.map(s => `
-            <label style="margin-right:16px; font-size:13px;">
-              <input type="checkbox" data-sede-check="${s.id}" ${asignadasIds.includes(s.id) ? 'checked' : ''}>
-              ${esc(s.nombre)}
-            </label>`).join('')
-        : '<span style="color:var(--texto-suave)">Esta empresa aún no tiene sedes registradas — agrégalas en "Clientes &amp; Sedes".</span>';
-      subTr.appendChild(subTd);
-      tbody.appendChild(subTr);
+  function mostrarListaContactos() {
+    document.getElementById('contactos-vista-detalle').style.display = 'none';
+    document.getElementById('contactos-vista-lista').style.display = 'block';
+    renderContactos();
+  }
 
-      subTd.querySelectorAll('[data-sede-check]').forEach(chk => {
-        chk.addEventListener('change', () => toggleContactoSede(k.id, parseInt(chk.dataset.sedeCheck, 10), chk.checked));
-      });
+  // Vista de DETALLE
+  async function mostrarDetalleContacto(id) {
+    document.getElementById('contactos-vista-lista').style.display = 'none';
+    const cont = document.getElementById('contactos-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
+
+    let k = CONTACTOS.find(x => x.id === id);
+    if (!k) {
+      const { data, error } = await sb.from('contactos').select('*').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Este contacto no existe o fue eliminado.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'contactos', titulo: 'Contacto no encontrado' });
+        return;
+      }
+      k = data;
+    }
+
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'contactos', titulo: k.nombre, subtitulo: 'Ficha de contacto' });
+
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Nombre',
+      valor: k.nombre,
+      onGuardar: async (nuevo) => {
+        const nombre = nuevo.trim();
+        if (!nombre) { toast('El nombre no puede quedar vacío', true); return false; }
+        const { error } = await sb.from('contactos').update({ nombre }).eq('id', k.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        k.nombre = nombre;
+        cont.querySelector('.panel-head h2').textContent = nombre;
+        toast('Contacto actualizado');
+        renderContactos();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Empresa (cliente)',
+      valor: k.cliente_id,
+      opcionesSelect: CLIENTES.map(c => ({ value: c.id, label: c.nombre })),
+      formatoVista: (v) => esc(CLIENTES.find(c => c.id === Number(v))?.nombre || '—'),
+      onGuardar: async (nuevo) => {
+        const clienteId = Number(nuevo);
+        const { error } = await sb.from('contactos').update({ cliente_id: clienteId }).eq('id', k.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        k.cliente_id = clienteId;
+        toast('Contacto actualizado');
+        renderContactos();
+        mostrarDetalleContacto(k.id); // refresca "Sedes asignadas", que depende del cliente
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Teléfono',
+      valor: k.telefono,
+      tipo: 'tel',
+      onGuardar: async (nuevo) => {
+        const telefono = nuevo.trim();
+        const { error } = await sb.from('contactos').update({ telefono: telefono || null }).eq('id', k.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        k.telefono = telefono || null;
+        toast('Contacto actualizado');
+        renderContactos();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Rol',
+      valor: k.rol,
+      onGuardar: async (nuevo) => {
+        const rol = nuevo.trim();
+        const { error } = await sb.from('contactos').update({ rol: rol || null }).eq('id', k.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        k.rol = rol || null;
+        toast('Contacto actualizado');
+        renderContactos();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Estado',
+      valor: k.activo === false ? 'false' : 'true',
+      opcionesSelect: [{ value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }],
+      formatoVista: (v) => `<span class="pill ${v === 'false' ? 'off' : 'on'}">${v === 'false' ? 'Inactivo' : 'Activo'}</span>`,
+      onGuardar: async (nuevo) => {
+        const activo = nuevo === 'true';
+        const { error } = await sb.from('contactos').update({ activo }).eq('id', k.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        k.activo = activo;
+        toast('Contacto actualizado');
+        renderContactos();
+        return true;
+      }
+    });
+
+    // ---- Listas relacionadas ----
+    const relacionadasWrap = document.createElement('div');
+    relacionadasWrap.style.marginTop = '8px';
+    cont.appendChild(relacionadasWrap);
+
+    // Sedes asignadas (preservado de la vista anterior: controla para qué sedes puede pedir este contacto)
+    const sedesDelCliente = SEDES.filter(s => s.cliente_id === k.cliente_id);
+    const asignadasIds = CONTACTO_SEDE.filter(cs => cs.contacto_id === k.id).map(cs => cs.sede_id);
+    const wrapSedes = listaRelacionada(relacionadasWrap, {
+      titulo: 'Sedes asignadas',
+      registros: sedesDelCliente,
+      columnas: [
+        { titulo: 'Sede', campo: 'nombre' },
+        { titulo: 'Puede pedir aquí', render: (s) => `<input type="checkbox" data-sede-check="${s.id}" ${asignadasIds.includes(s.id) ? 'checked' : ''}>` }
+      ],
+      filaVacia: 'Esta empresa aún no tiene sedes registradas.'
+    });
+    wrapSedes.querySelectorAll('[data-sede-check]').forEach(chk => {
+      chk.addEventListener('change', () => toggleContactoSede(k.id, Number(chk.dataset.sedeCheck), chk.checked));
+    });
+
+    // Pedidos de este contacto
+    const { data: pedidosContacto, error: errPed } = await sb.from('pedidos')
+      .select('id, fecha_entrega, cantidad, estado, productos(nombre)')
+      .eq('contacto_id', k.id)
+      .order('fecha_entrega', { ascending: false });
+    if (errPed) { toast('Error cargando pedidos del contacto: ' + errPed.message, true); }
+    listaRelacionada(relacionadasWrap, {
+      titulo: 'Pedidos',
+      registros: pedidosContacto || [],
+      columnas: [
+        { titulo: 'Fecha entrega', render: (p) => p.fecha_entrega ? esc(new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })) : '—' },
+        { titulo: 'Producto', render: (p) => esc(p.productos?.nombre || '—') },
+        { titulo: 'Cantidad', campo: 'cantidad' },
+        { titulo: 'Estado', render: (p) => `<span class="pill ${p.estado === 'Entregado' ? 'on' : 'off'}">${esc(p.estado || 'Pendiente')}</span>` }
+      ],
+      filaVacia: 'Este contacto aún no tiene pedidos registrados.'
     });
   }
+
+  registrarVistaListaDetalle('contactos', { mostrarLista: mostrarListaContactos, mostrarDetalle: mostrarDetalleContacto });
 
   async function toggleContactoSede(contactoId, sedeId, marcado) {
     if (marcado) {
@@ -1604,77 +2207,22 @@
     toast('Asignación actualizada');
     const { data } = await sb.from('contacto_sede').select('*');
     CONTACTO_SEDE = data || [];
-    renderContactoResumen(contactoId);
-  }
-
-  function renderContactoResumen(contactoId) {
-    const tr = document.querySelector(`tbody#tbody-contactos tr[data-row-for="${contactoId}"]`);
-    const k = CONTACTOS.find(x => x.id === contactoId);
-    if (tr && k) pintarFilaContacto(tr, k);
-  }
-
-  function pintarFilaContacto(tr, k) {
-    const cliente = CLIENTES.find(c => c.id === k.cliente_id);
-    const asignadas = CONTACTO_SEDE.filter(cs => cs.contacto_id === k.id)
-      .map(cs => SEDES.find(s => s.id === cs.sede_id)?.nombre)
-      .filter(Boolean);
-    tr.innerHTML = `
-      <td><button class="link" data-edit-k="${k.id}">Editar</button> &nbsp;<strong>${esc(k.nombre)}</strong></td>
-      <td>${esc(cliente ? cliente.nombre : '—')}</td>
-      <td>${esc(k.rol || '—')}</td>
-      <td>${esc(k.telefono || '—')}</td>
-      <td><button class="link" data-toggle-k="${k.id}">${asignadas.length ? esc(asignadas.join(', ')) : 'Sin sedes'} ▾</button></td>
-      <td><span class="pill ${k.activo === false ? 'off' : 'on'}">${k.activo === false ? 'Inactivo' : 'Activo'}</span></td>
-      <td><button class="ghost" data-toggle-activo-k="${k.id}">${k.activo === false ? 'Activar' : 'Desactivar'}</button></td>
-    `;
-    tr.querySelector('[data-edit-k]').addEventListener('click', () => pintarFilaContactoEdicion(tr, k));
-    tr.querySelector('[data-toggle-k]').addEventListener('click', () => {
-      const subTr = document.querySelector(`tr[data-sub-k-for="${k.id}"]`);
-      subTr.style.display = subTr.style.display === 'none' ? 'table-row' : 'none';
-    });
-    tr.querySelector('[data-toggle-activo-k]').addEventListener('click', () => toggleActivoContacto(k.id, k.activo === false));
-  }
-
-  async function toggleActivoContacto(id, activar) {
-    const { error } = await sb.from('contactos').update({ activo: activar }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast(activar ? 'Contacto activado' : 'Contacto desactivado');
-    cargarContactos();
-  }
-
-  function pintarFilaContactoEdicion(tr, k) {
-    const opcionesClientes = CLIENTES.map(c => `<option value="${c.id}" ${c.id === k.cliente_id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('');
-    tr.innerHTML = `
-      <td><input type="text" class="mini" id="edk-nombre-${k.id}" value="${escAttr(k.nombre)}"></td>
-      <td><select class="mini" id="edk-cliente-${k.id}">${opcionesClientes}</select></td>
-      <td><input type="text" class="mini" id="edk-rol-${k.id}" value="${escAttr(k.rol || '')}"></td>
-      <td><input type="tel" class="mini" id="edk-telefono-${k.id}" value="${escAttr(k.telefono || '')}"></td>
-      <td colspan="2" style="white-space:nowrap;">
-        <button class="link" data-save-k="${k.id}">Guardar</button>
-        &nbsp;·&nbsp;
-        <button class="link" data-cancel-k="${k.id}">Cancelar</button>
-      </td>
-      <td></td>
-    `;
-    tr.querySelector('[data-save-k]').addEventListener('click', () => guardarContacto(k.id));
-    tr.querySelector('[data-cancel-k]').addEventListener('click', () => pintarFilaContacto(tr, k));
-  }
-
-  async function guardarContacto(id) {
-    const nombre = document.getElementById('edk-nombre-' + id).value.trim();
-    const clienteId = document.getElementById('edk-cliente-' + id).value;
-    const rol = document.getElementById('edk-rol-' + id).value.trim();
-    const telefono = document.getElementById('edk-telefono-' + id).value.trim();
-    if (!nombre) { toast('El nombre no puede quedar vacío', true); return; }
-    const { error } = await sb.from('contactos').update({
-      nombre, cliente_id: clienteId, rol: rol || null, telefono: telefono || null
-    }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast('Contacto actualizado');
-    cargarContactos();
+    refrescarDetalleSiAbierto('contactos', contactoId);
   }
 
   // ---------- PRODUCTOS ----------
+  async function cargarFormulas() {
+    const { data, error } = await sb.from('formulas').select('id, nombre').order('nombre');
+    if (error) { toast('Error cargando fórmulas: ' + error.message, true); return; }
+    FORMULAS = data || [];
+  }
+
+  async function cargarPresentaciones() {
+    const { data, error } = await sb.from('presentaciones').select('id, nombre').order('nombre');
+    if (error) { toast('Error cargando presentaciones: ' + error.message, true); return; }
+    PRESENTACIONES = data || [];
+  }
+
   async function cargarProductos() {
     const { data, error } = await sb.from('productos').select('*, formulas(nombre)').order('nombre');
     if (error) { toast('Error cargando productos: ' + error.message, true); return; }
@@ -1683,61 +2231,127 @@
     poblarSelectsProducto();
   }
 
+  // Vista de LISTA
   function renderProductos() {
     const tbody = document.getElementById('tbody-productos');
-    if (!PRODUCTOS.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Aún no hay productos.</td></tr>'; return; }
-    tbody.innerHTML = '';
-    PRODUCTOS.forEach(p => {
-      const tr = document.createElement('tr');
-      pintarFilaProducto(tr, p);
-      tbody.appendChild(tr);
+    if (!PRODUCTOS.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Aún no hay productos.</td></tr>'; return; }
+    tbody.innerHTML = PRODUCTOS.map(p => `
+      <tr>
+        <td><a href="#/productos/${p.id}"><strong>${esc(p.nombre)}</strong></a></td>
+        <td>${esc(p.categoria || '—')}</td>
+        <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      </tr>`).join('');
+  }
+
+  function mostrarListaProductos() {
+    document.getElementById('productos-vista-detalle').style.display = 'none';
+    document.getElementById('productos-vista-lista').style.display = 'block';
+    renderProductos();
+  }
+
+  // Vista de DETALLE
+  async function mostrarDetalleProducto(id) {
+    document.getElementById('productos-vista-lista').style.display = 'none';
+    const cont = document.getElementById('productos-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
+
+    let p = PRODUCTOS.find(x => x.id === id);
+    if (!p) {
+      const { data, error } = await sb.from('productos').select('*, formulas(nombre)').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Este producto no existe o fue eliminado.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'productos', titulo: 'Producto no encontrado' });
+        return;
+      }
+      p = data;
+    }
+
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'productos', titulo: p.nombre, subtitulo: 'Ficha de producto' });
+
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Nombre',
+      valor: p.nombre,
+      onGuardar: async (nuevo) => {
+        const nombre = nuevo.trim();
+        if (!nombre) { toast('El nombre no puede quedar vacío', true); return false; }
+        const { error } = await sb.from('productos').update({ nombre }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.nombre = nombre;
+        cont.querySelector('.panel-head h2').textContent = nombre;
+        toast('Producto actualizado');
+        renderProductos();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Categoría',
+      valor: p.categoria,
+      onGuardar: async (nuevo) => {
+        const categoria = nuevo.trim();
+        const { error } = await sb.from('productos').update({ categoria: categoria || null }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.categoria = categoria || null;
+        toast('Producto actualizado');
+        renderProductos();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Receta (fórmula)',
+      valor: p.formula_id ?? '',
+      opcionesSelect: [{ value: '', label: '— Sin receta —' }, ...FORMULAS.map(f => ({ value: f.id, label: f.nombre }))],
+      formatoVista: () => esc(FORMULAS.find(f => f.id === p.formula_id)?.nombre || '— sin receta —'),
+      onGuardar: async (nuevo) => {
+        const formulaId = nuevo === '' ? null : Number(nuevo);
+        const { error } = await sb.from('productos').update({ formula_id: formulaId }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.formula_id = formulaId;
+        toast('Producto actualizado');
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Presentación',
+      valor: p.presentacion_id ?? '',
+      opcionesSelect: [{ value: '', label: '— Sin presentación —' }, ...PRESENTACIONES.map(pr => ({ value: pr.id, label: pr.nombre }))],
+      formatoVista: () => esc(PRESENTACIONES.find(pr => pr.id === p.presentacion_id)?.nombre || '— sin presentación —'),
+      onGuardar: async (nuevo) => {
+        const presentacionId = nuevo === '' ? null : Number(nuevo);
+        const { error } = await sb.from('productos').update({ presentacion_id: presentacionId }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.presentacion_id = presentacionId;
+        toast('Producto actualizado');
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Estado',
+      valor: p.activo === false ? 'false' : 'true',
+      opcionesSelect: [{ value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }],
+      formatoVista: (v) => `<span class="pill ${v === 'false' ? 'off' : 'on'}">${v === 'false' ? 'Inactivo' : 'Activo'}</span>`,
+      onGuardar: async (nuevo) => {
+        const activo = nuevo === 'true';
+        const { error } = await sb.from('productos').update({ activo }).eq('id', p.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        p.activo = activo;
+        toast('Producto actualizado');
+        renderProductos();
+        return true;
+      }
     });
   }
 
-  function pintarFilaProducto(tr, p) {
-    tr.innerHTML = `
-      <td><button class="link" data-edit-p="${p.id}">Editar</button> &nbsp;<strong>${esc(p.nombre)}</strong></td>
-      <td>${esc(p.categoria)}</td>
-      <td>${esc(p.formulas ? p.formulas.nombre : '— sin receta —')}</td>
-      <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
-      <td><button class="ghost" data-toggle-prod="${p.id}">${p.activo === false ? 'Activar' : 'Desactivar'}</button></td>
-    `;
-    tr.querySelector('[data-edit-p]').addEventListener('click', () => pintarFilaProductoEdicion(tr, p));
-    tr.querySelector('[data-toggle-prod]').addEventListener('click', () => toggleProducto(p.id, p.activo === false));
-  }
-
-  function pintarFilaProductoEdicion(tr, p) {
-    tr.innerHTML = `
-      <td><input type="text" class="mini" id="edp-nombre-${p.id}" value="${escAttr(p.nombre)}"></td>
-      <td><input type="text" class="mini" id="edp-categoria-${p.id}" value="${escAttr(p.categoria || '')}"></td>
-      <td>${esc(p.formulas ? p.formulas.nombre : '— sin receta —')}</td>
-      <td><span class="pill ${p.activo === false ? 'off' : 'on'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
-      <td style="white-space:nowrap;">
-        <button class="link" data-save-p="${p.id}">Guardar</button>
-        &nbsp;·&nbsp;
-        <button class="link" data-cancel-p="${p.id}">Cancelar</button>
-      </td>
-    `;
-    tr.querySelector('[data-save-p]').addEventListener('click', () => guardarProducto(p.id));
-    tr.querySelector('[data-cancel-p]').addEventListener('click', () => { pintarFilaProducto(tr, p); });
-  }
-
-  async function guardarProducto(id) {
-    const nombre = document.getElementById('edp-nombre-' + id).value.trim();
-    const categoria = document.getElementById('edp-categoria-' + id).value.trim();
-    if (!nombre) { toast('El nombre no puede quedar vacío', true); return; }
-    const { error } = await sb.from('productos').update({ nombre, categoria }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast('Producto actualizado');
-    cargarProductos();
-  }
-
-  async function toggleProducto(id, activar) {
-    const { error } = await sb.from('productos').update({ activo: activar }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast(activar ? 'Producto activado' : 'Producto desactivado');
-    cargarProductos();
-  }
+  registrarVistaListaDetalle('productos', { mostrarLista: mostrarListaProductos, mostrarDetalle: mostrarDetalleProducto });
 
   window.crearProducto = async function() {
     const nombre = document.getElementById('np-nombre').value.trim();
@@ -1758,26 +2372,24 @@
     renderClientesPotenciales();
   }
 
+  // Vista de LISTA
   function renderClientesPotenciales() {
     const tbody = document.getElementById('tbody-potenciales');
-    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
-    tbody.innerHTML = '';
-    CLIENTES_POTENCIALES.forEach(cp => {
-      const tr = document.createElement('tr');
-      pintarFilaPotencial(tr, cp);
-      tbody.appendChild(tr);
+    if (!CLIENTES_POTENCIALES.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Aún no hay clientes potenciales.</td></tr>'; return; }
+    tbody.innerHTML = CLIENTES_POTENCIALES.map(cp => `
+      <tr>
+        <td>${esc(cp.telefono || '—')}</td>
+        <td><a href="#/potenciales/${cp.id}"><strong>${esc(cp.nombre || cp.telefono || 'Sin nombre')}</strong></a></td>
+        <td>${esc(cp.ciudad || '—')}</td>
+        <td>${esc(cp.tipo_negocio || '—')}</td>
+        <td><span class="pill ${claseEstadoPotencial(cp.estado)}">${esc(cp.estado || 'Sin estado')}</span></td>
+      </tr>`).join('');
+  }
 
-      const subTr = document.createElement('tr');
-      subTr.className = 'subrow';
-      subTr.style.display = 'none';
-      subTr.setAttribute('data-sub-cp-for', cp.id);
-      const subTd = document.createElement('td');
-      subTd.colSpan = 6;
-      subTd.innerHTML = construirDetallePotencial(cp);
-      subTd.dataset.modo = 'detalle';
-      subTr.appendChild(subTd);
-      tbody.appendChild(subTr);
-    });
+  function mostrarListaPotenciales() {
+    document.getElementById('potenciales-vista-detalle').style.display = 'none';
+    document.getElementById('potenciales-vista-lista').style.display = 'block';
+    renderClientesPotenciales();
   }
 
   const ESTADOS_POTENCIAL_FIJOS = ['Nuevo', 'Muestra Agendada', 'No Interesado', 'Convertir a Cliente'];
@@ -1798,144 +2410,123 @@
 
   function opcionesEstadoPotencial(estadoActual) {
     const coincidencia = estadoFijoCoincidente(estadoActual);
-    let html = `<option value="">— Sin estado —</option>`;
-    html += ESTADOS_POTENCIAL_FIJOS.map(o => `<option value="${o}" ${coincidencia === o ? 'selected' : ''}>${o}</option>`).join('');
-    if (estadoActual && !coincidencia) {
-      html += `<option value="${escAttr(estadoActual)}" selected>${esc(estadoActual)}</option>`;
-    }
-    return html;
+    const opciones = [{ value: '', label: '— Sin estado —' }, ...ESTADOS_POTENCIAL_FIJOS.map(o => ({ value: o, label: o }))];
+    if (estadoActual && !coincidencia) opciones.push({ value: estadoActual, label: estadoActual });
+    return opciones;
   }
 
-  function construirDetallePotencial(cp) {
-    const campos = [
-      ['Nombre local', cp.nombre_local],
-      ['Canal origen', cp.canal_origen],
-      ['Campaña', cp.campana],
-      ['Volumen estimado', cp.volumen_estimado],
-      ['Tipo de agenda', cp.tipo_agenda],
-      ['Horario preferencia', cp.horario_preferencia],
-      ['Notas', cp.notas],
-      ['Resultado final', cp.resultado_final],
-      ['Dirección de muestra', cp.direccion_muestra],
-      ['Último contacto', cp.fecha_ultimo_contacto ? new Date(cp.fecha_ultimo_contacto + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short', year:'numeric'}) : null]
-    ].filter(([, valor]) => valor != null && String(valor).trim() !== '');
+  // Vista de DETALLE
+  async function mostrarDetallePotencial(id) {
+    document.getElementById('potenciales-vista-lista').style.display = 'none';
+    const cont = document.getElementById('potenciales-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
 
-    if (!campos.length) {
-      return '<span style="color:var(--texto-suave);">Sin información adicional todavía</span>';
+    let cp = CLIENTES_POTENCIALES.find(x => x.id === id);
+    if (!cp) {
+      const { data, error } = await sb.from('clientes_potenciales').select('*').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Este prospecto no existe o fue eliminado.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'potenciales', titulo: 'Prospecto no encontrado' });
+        return;
+      }
+      cp = data;
     }
-    return campos.map(([etiqueta, valor]) => `<div style="margin-bottom:6px;"><strong>${esc(etiqueta)}:</strong> ${esc(valor)}</div>`).join('');
-  }
 
-  function pintarFilaPotencial(tr, cp) {
-    tr.innerHTML = `
-      <td>${esc(cp.telefono || '—')}</td>
-      <td><button class="link" data-edit-cp="${cp.id}">Editar</button> &nbsp;<strong>${esc(cp.nombre || '—')}</strong></td>
-      <td>${esc(cp.ciudad || '—')}</td>
-      <td>${esc(cp.tipo_negocio || '—')}</td>
-      <td><span class="pill ${claseEstadoPotencial(cp.estado)}">${esc(cp.estado || 'Sin estado')}</span></td>
-      <td style="white-space:nowrap;">
-        <button class="link" data-toggle-cp="${cp.id}">Ver detalle ▾</button>
-      </td>
-    `;
-    tr.querySelector('[data-edit-cp]').addEventListener('click', () => pintarFilaPotencialEdicion(cp));
-    tr.querySelector('[data-toggle-cp]').addEventListener('click', () => {
-      const subTr = document.querySelector(`tr[data-sub-cp-for="${cp.id}"]`);
-      const subTd = subTr.querySelector('td');
-      const mostrandoDetalle = subTr.style.display !== 'none' && subTd.dataset.modo === 'detalle';
-      if (mostrandoDetalle) {
-        subTr.style.display = 'none';
-      } else {
-        subTd.innerHTML = construirDetallePotencial(cp);
-        subTd.dataset.modo = 'detalle';
-        subTr.style.display = 'table-row';
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'potenciales', titulo: cp.nombre || cp.telefono || 'Prospecto sin nombre', subtitulo: 'Ficha de cliente potencial' });
+
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    const campoTextoSimple = (etiqueta, campoDb, tipo = 'text') => campoEditable(camposWrap, {
+      etiqueta,
+      valor: cp[campoDb],
+      tipo,
+      onGuardar: async (nuevo) => {
+        const valor = nuevo.trim();
+        const { error } = await sb.from('clientes_potenciales').update({ [campoDb]: valor || null }).eq('id', cp.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        cp[campoDb] = valor || null;
+        toast('Prospecto actualizado');
+        renderClientesPotenciales();
+        return true;
       }
     });
-  }
 
-  function construirFormularioEdicionPotencial(cp) {
-    const campo = (id, etiqueta, valor, tipo = 'text') => `
-      <div style="display:flex; flex-direction:column; gap:4px;">
-        <label for="${id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">${esc(etiqueta)}</label>
-        <input type="${tipo}" class="mini" id="${id}" value="${escAttr(valor || '')}">
-      </div>`;
-
-    return `
-      <div class="cp-edit-grid" style="margin-bottom:14px;">
-        ${campo(`edcp-telefono-${cp.id}`, 'Teléfono', cp.telefono, 'tel')}
-        ${campo(`edcp-nombre-${cp.id}`, 'Nombre', cp.nombre)}
-        ${campo(`edcp-nombre-local-${cp.id}`, 'Nombre local', cp.nombre_local)}
-        ${campo(`edcp-canal-origen-${cp.id}`, 'Canal origen', cp.canal_origen)}
-        ${campo(`edcp-campana-${cp.id}`, 'Campaña', cp.campana)}
-        ${campo(`edcp-tipo-negocio-${cp.id}`, 'Tipo de negocio', cp.tipo_negocio)}
-        ${campo(`edcp-ciudad-${cp.id}`, 'Ciudad', cp.ciudad)}
-        ${campo(`edcp-volumen-estimado-${cp.id}`, 'Volumen estimado', cp.volumen_estimado)}
-        ${campo(`edcp-tipo-agenda-${cp.id}`, 'Tipo de agenda', cp.tipo_agenda)}
-        ${campo(`edcp-horario-preferencia-${cp.id}`, 'Horario preferencia', cp.horario_preferencia)}
-        <div style="display:flex; flex-direction:column; gap:4px;">
-          <label for="edcp-estado-${cp.id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">Estado</label>
-          <select class="mini" id="edcp-estado-${cp.id}">${opcionesEstadoPotencial(cp.estado)}</select>
-        </div>
-        ${campo(`edcp-fecha-ultimo-contacto-${cp.id}`, 'Último contacto', cp.fecha_ultimo_contacto, 'date')}
-        ${campo(`edcp-notas-${cp.id}`, 'Notas', cp.notas)}
-        ${campo(`edcp-resultado-final-${cp.id}`, 'Resultado final', cp.resultado_final)}
-        ${campo(`edcp-direccion-muestra-${cp.id}`, 'Dirección de muestra', cp.direccion_muestra)}
-      </div>
-      <div>
-        <button class="primary" data-save-cp="${cp.id}">Guardar</button>
-        <button class="ghost" data-cancel-cp="${cp.id}">Cancelar</button>
-      </div>`;
-  }
-
-  function pintarFilaPotencialEdicion(cp) {
-    const subTr = document.querySelector(`tr[data-sub-cp-for="${cp.id}"]`);
-    const subTd = subTr.querySelector('td');
-    subTd.innerHTML = construirFormularioEdicionPotencial(cp);
-    subTd.dataset.modo = 'edicion';
-    subTr.style.display = 'table-row';
-    subTd.querySelector('[data-save-cp]').addEventListener('click', () => guardarPotencial(cp.id));
-    subTd.querySelector('[data-cancel-cp]').addEventListener('click', () => {
-      subTd.innerHTML = construirDetallePotencial(cp);
-      subTd.dataset.modo = 'detalle';
+    campoEditable(camposWrap, {
+      etiqueta: 'Nombre',
+      valor: cp.nombre,
+      onGuardar: async (nuevo) => {
+        const nombre = nuevo.trim();
+        const { error } = await sb.from('clientes_potenciales').update({ nombre: nombre || null }).eq('id', cp.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        cp.nombre = nombre || null;
+        cont.querySelector('.panel-head h2').textContent = cp.nombre || cp.telefono || 'Prospecto sin nombre';
+        toast('Prospecto actualizado');
+        renderClientesPotenciales();
+        return true;
+      }
     });
+    campoTextoSimple('Teléfono', 'telefono', 'tel');
+    campoTextoSimple('Nombre del local', 'nombre_local');
+    campoTextoSimple('Canal de origen', 'canal_origen');
+    campoTextoSimple('Campaña', 'campana');
+    campoTextoSimple('Tipo de negocio', 'tipo_negocio');
+    campoTextoSimple('Ciudad', 'ciudad');
+    campoTextoSimple('Volumen estimado', 'volumen_estimado');
+    campoTextoSimple('Tipo de agenda', 'tipo_agenda');
+    campoTextoSimple('Horario de preferencia', 'horario_preferencia');
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Estado',
+      valor: estadoFijoCoincidente(cp.estado) || cp.estado || '',
+      opcionesSelect: opcionesEstadoPotencial(cp.estado),
+      formatoVista: (v) => `<span class="pill ${claseEstadoPotencial(v)}">${esc(v || 'Sin estado')}</span>`,
+      onGuardar: async (nuevo) => {
+        const { error } = await sb.from('clientes_potenciales').update({ estado: nuevo || null }).eq('id', cp.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        cp.estado = nuevo || null;
+        toast('Prospecto actualizado');
+        renderClientesPotenciales();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Último contacto',
+      valor: cp.fecha_ultimo_contacto,
+      tipo: 'date',
+      formatoVista: (v) => v ? esc(new Date(v + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })) : '—',
+      onGuardar: async (nuevo) => {
+        const { error } = await sb.from('clientes_potenciales').update({ fecha_ultimo_contacto: nuevo || null }).eq('id', cp.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        cp.fecha_ultimo_contacto = nuevo || null;
+        toast('Prospecto actualizado');
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Notas',
+      valor: cp.notas,
+      tipo: 'textarea',
+      onGuardar: async (nuevo) => {
+        const notas = nuevo.trim();
+        const { error } = await sb.from('clientes_potenciales').update({ notas: notas || null }).eq('id', cp.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        cp.notas = notas || null;
+        toast('Prospecto actualizado');
+        return true;
+      }
+    });
+
+    campoTextoSimple('Resultado final', 'resultado_final');
+    campoTextoSimple('Dirección de muestra', 'direccion_muestra');
   }
 
-  async function guardarPotencial(id) {
-    const telefono = document.getElementById('edcp-telefono-' + id).value.trim();
-    const nombre = document.getElementById('edcp-nombre-' + id).value.trim();
-    const nombreLocal = document.getElementById('edcp-nombre-local-' + id).value.trim();
-    const canalOrigen = document.getElementById('edcp-canal-origen-' + id).value.trim();
-    const campana = document.getElementById('edcp-campana-' + id).value.trim();
-    const tipoNegocio = document.getElementById('edcp-tipo-negocio-' + id).value.trim();
-    const ciudad = document.getElementById('edcp-ciudad-' + id).value.trim();
-    const volumenEstimado = document.getElementById('edcp-volumen-estimado-' + id).value.trim();
-    const tipoAgenda = document.getElementById('edcp-tipo-agenda-' + id).value.trim();
-    const horarioPreferencia = document.getElementById('edcp-horario-preferencia-' + id).value.trim();
-    const estado = document.getElementById('edcp-estado-' + id).value.trim();
-    const fechaUltimoContacto = document.getElementById('edcp-fecha-ultimo-contacto-' + id).value;
-    const notas = document.getElementById('edcp-notas-' + id).value.trim();
-    const resultadoFinal = document.getElementById('edcp-resultado-final-' + id).value.trim();
-    const direccionMuestra = document.getElementById('edcp-direccion-muestra-' + id).value.trim();
-    const { error } = await sb.from('clientes_potenciales').update({
-      telefono: telefono || null,
-      nombre: nombre || null,
-      nombre_local: nombreLocal || null,
-      canal_origen: canalOrigen || null,
-      campana: campana || null,
-      tipo_negocio: tipoNegocio || null,
-      ciudad: ciudad || null,
-      volumen_estimado: volumenEstimado || null,
-      tipo_agenda: tipoAgenda || null,
-      horario_preferencia: horarioPreferencia || null,
-      estado: estado || null,
-      fecha_ultimo_contacto: fechaUltimoContacto || null,
-      notas: notas || null,
-      resultado_final: resultadoFinal || null,
-      direccion_muestra: direccionMuestra || null
-    }).eq('id', id);
-    if (error) { toast('Error: ' + error.message, true); return; }
-    toast('Prospecto actualizado');
-    cargarClientesPotenciales();
-  }
+  registrarVistaListaDetalle('potenciales', { mostrarLista: mostrarListaPotenciales, mostrarDetalle: mostrarDetallePotencial });
 
   window.mostrarFormularioProspecto = function() {
     document.getElementById('ncp-form-wrap').style.display = '';
@@ -2330,6 +2921,12 @@
     TIPOS_GASTO = data || [];
   }
 
+  async function cargarProveedores() {
+    const { data, error } = await sb.from('pizzamos_proveedores').select('loggro_id, nombre, documento').eq('activo', true).order('nombre');
+    if (error) { toast('Error cargando proveedores: ' + error.message, true); return; }
+    PROVEEDORES = data || [];
+  }
+
   document.getElementById('fact-filtro-estado').addEventListener('change', () => cargarFacturas());
   document.getElementById('btn-aprobar-todo').addEventListener('click', aprobarTodo);
   document.getElementById('btn-enviar-loggro').addEventListener('click', enviarALoggro);
@@ -2428,6 +3025,28 @@
         detalle.querySelector('[data-cancel-fact]').addEventListener('click', () => {
           detalle.style.display = 'none';
         });
+
+        const selectProveedor = detalle.querySelector(`#edf-proveedor-select-${f.id}`);
+        const inputProvNombre = detalle.querySelector(`#edf-proveedor-nombre-${f.id}`);
+        const inputProvDocumento = detalle.querySelector(`#edf-proveedor-documento-${f.id}`);
+        const inputProvLoggroId = detalle.querySelector(`#edf-proveedor-loggro-id-${f.id}`);
+        function aplicarSeleccionProveedor() {
+          const val = selectProveedor.value;
+          if (val && val !== '__otro__') {
+            const prov = PROVEEDORES.find(p => String(p.loggro_id) === val);
+            inputProvLoggroId.value = prov ? String(prov.loggro_id) : '';
+            inputProvNombre.value = prov ? prov.nombre : '';
+            inputProvDocumento.value = prov ? (prov.documento || '') : '';
+            inputProvNombre.readOnly = true;
+            inputProvDocumento.readOnly = true;
+          } else {
+            inputProvLoggroId.value = '';
+            inputProvNombre.readOnly = false;
+            inputProvDocumento.readOnly = false;
+          }
+        }
+        selectProveedor.addEventListener('change', aplicarSeleccionProveedor);
+        aplicarSeleccionProveedor();
       }
     });
 
@@ -2435,6 +3054,17 @@
     if (aprobarBtn) aprobarBtn.addEventListener('click', () => actualizarEstadoFactura(f.id, 'aprobada'));
     const rechazarBtn = card.querySelector('[data-rechazar-fact]');
     if (rechazarBtn) rechazarBtn.addEventListener('click', () => actualizarEstadoFactura(f.id, 'rechazada'));
+  }
+
+  function opcionesProveedor(loggroIdActual) {
+    const proveedorMatch = loggroIdActual != null
+      ? PROVEEDORES.find(p => String(p.loggro_id) === String(loggroIdActual))
+      : null;
+    const esOtro = !proveedorMatch;
+    let html = '<option value="">— Elige un proveedor —</option>';
+    html += PROVEEDORES.map(p => `<option value="${escAttr(String(p.loggro_id))}" ${proveedorMatch && String(proveedorMatch.loggro_id) === String(p.loggro_id) ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('');
+    html += `<option value="__otro__" ${esOtro ? 'selected' : ''}>Otro / no está en la lista</option>`;
+    return html;
   }
 
   function construirFormularioEdicionFactura(f) {
@@ -2446,7 +3076,12 @@
 
     return `
       <div class="cp-edit-grid" style="margin-bottom:14px;">
-        ${campo(`edf-proveedor-nombre-${f.id}`, 'Proveedor', f.proveedor_nombre)}
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label for="edf-proveedor-select-${f.id}" style="font-size:11px; color:var(--texto-suave); font-weight:600; text-transform:uppercase; letter-spacing:.03em;">Proveedor</label>
+          <select class="mini" id="edf-proveedor-select-${f.id}">${opcionesProveedor(f.proveedor_loggro_id)}</select>
+        </div>
+        <input type="hidden" id="edf-proveedor-loggro-id-${f.id}" value="${f.proveedor_loggro_id != null && PROVEEDORES.some(p => String(p.loggro_id) === String(f.proveedor_loggro_id)) ? escAttr(String(f.proveedor_loggro_id)) : ''}">
+        ${campo(`edf-proveedor-nombre-${f.id}`, 'Nombre del proveedor', f.proveedor_nombre)}
         ${campo(`edf-proveedor-documento-${f.id}`, 'Documento proveedor', f.proveedor_documento)}
         ${campo(`edf-numero-${f.id}`, 'Número de factura', f.numero_factura)}
         ${campo(`edf-fecha-${f.id}`, 'Fecha de factura', f.fecha_factura, 'date')}
@@ -2469,6 +3104,7 @@
   async function guardarFactura(id) {
     const proveedorNombre = document.getElementById('edf-proveedor-nombre-' + id).value.trim();
     const proveedorDocumento = document.getElementById('edf-proveedor-documento-' + id).value.trim();
+    const proveedorLoggroId = document.getElementById('edf-proveedor-loggro-id-' + id).value.trim();
     const numeroFactura = document.getElementById('edf-numero-' + id).value.trim();
     const fechaFactura = document.getElementById('edf-fecha-' + id).value;
     const concepto = document.getElementById('edf-concepto-' + id).value.trim();
@@ -2481,6 +3117,7 @@
     const { error } = await sb.from('pizzamos_facturas').update({
       proveedor_nombre: proveedorNombre || null,
       proveedor_documento: proveedorDocumento || null,
+      proveedor_loggro_id: proveedorLoggroId || null,
       numero_factura: numeroFactura || null,
       fecha_factura: fechaFactura || null,
       concepto: concepto || null,
