@@ -2559,7 +2559,7 @@
     btn.textContent = 'Enviando…';
     document.getElementById('loggro-resultado').style.display = 'none';
     try {
-      const { data, error } = await sb.functions.invoke('enviar-a-loggro', { method: 'POST' });
+      const { data, error } = await sb.functions.invoke('Enviar-a-loggro', { method: 'POST' });
       if (error) { toast('Error enviando a Loggro: ' + error.message, true); return; }
       const fallidas = (data && data.fallidas) || [];
       const exitosas = (data && data.exitosas != null) ? data.exitosas : 0;
