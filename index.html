@@ -3377,7 +3377,7 @@
       const { data, error } = await sb.functions.invoke('Enviar-a-loggro', { method: 'POST' });
       if (error) { toast('Error enviando a Loggro: ' + error.message, true); return; }
       const fallidas = (data && data.fallidas) || [];
-      const exitosas = (data && data.exitosas != null) ? data.exitosas : 0;
+      const exitosas = (data && data.enviadas != null) ? data.enviadas : 0;
       pintarResultadoLoggro(exitosas, fallidas);
       toast(fallidas.length ? `${exitosas} enviadas, ${fallidas.length} fallidas` : `${exitosas} facturas enviadas con éxito`, fallidas.length > 0);
       cargarFacturas();
