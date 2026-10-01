@@ -148,41 +148,59 @@
     flex-wrap: wrap;
     gap: 10px;
   }
-  header.topbar h1 { font-size: 19px; }
   header.topbar span { color: #C9BBA6; font-size: 12px; }
 
-  nav.tabs {
+  /* Dropdown de navegación principal (estilo Salesforce), en el header */
+  .nav-dropdown { position: relative; }
+  .nav-dropdown-trigger {
     display: flex;
+    align-items: center;
     gap: 8px;
-    padding: 16px 28px 0;
-    background: var(--masa);
-    border-bottom: 1px solid var(--linea);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  nav.tabs::-webkit-scrollbar { display: none; }
-  nav.tabs button {
     background: none;
     border: none;
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--texto-suave);
+    color: var(--masa);
+    font-size: 15px;
+    font-family: inherit;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
-    white-space: nowrap;
-    flex-shrink: 0;
+    padding: 6px 4px;
+    border-radius: var(--radius-sm);
+    transition: background-color 150ms ease;
   }
-  nav.tabs button:hover { color: var(--texto); background: rgba(0,0,0,0.03); }
-  nav.tabs button.active {
-    color: var(--costra-2);
-    border-bottom: 2px solid var(--costra);
+  .nav-dropdown-trigger:hover { background: rgba(255,255,255,0.08); }
+  .nav-dropdown-trigger:focus-visible { outline: 2px solid var(--costra); outline-offset: 2px; }
+  .nav-dropdown-trigger strong { font-size: 15px; }
+  #nav-dropdown-actual { color: #C9BBA6; font-weight: 600; font-size: 13px; }
+  .nav-dropdown-caret { color: #C9BBA6; font-size: 11px; transition: transform 150ms ease; }
+  .nav-dropdown-trigger[aria-expanded="true"] .nav-dropdown-caret { transform: rotate(180deg); }
+
+  .nav-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 240px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    padding: 6px;
+    z-index: 50;
   }
-  nav.tabs button:focus-visible { outline: 2px solid var(--costra); outline-offset: -2px; }
+  .nav-dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--texto);
+    font-size: 14px;
+    font-family: inherit;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .nav-dropdown-item:hover { background: var(--masa); }
+  .nav-dropdown-item.active { background: rgba(244,162,12,0.1); color: var(--costra-2); font-weight: 600; }
 
   main { padding: 32px 28px 28px; max-width: 1600px; margin: 0 auto; }
   .panel { display: none; }
@@ -190,11 +208,29 @@
 
   .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 
+  /* Tarjetas de acceso directo en Home */
+  .home-accesos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .home-acceso-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 22px 20px;
+    text-decoration: none;
+    color: var(--texto);
+    transition: box-shadow 150ms ease, transform 150ms ease;
+  }
+  .home-acceso-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+  .home-acceso-card strong { font-size: 16px; color: var(--costra-2); }
+  .home-acceso-card span { font-size: 13px; color: var(--texto-suave); }
+
   @media (max-width: 700px) {
     main { padding: 16px; }
     .two-col-grid { grid-template-columns: 1fr; }
     header.topbar { padding: 14px 16px; }
-    nav.tabs { padding: 12px 16px 0; }
+    .nav-dropdown-menu { left: 0; right: 0; min-width: 0; }
   }
 
   .panel-head {
@@ -326,7 +362,25 @@
 
 <div id="app">
   <header class="topbar">
-    <h1>Trepando · Administrador</h1>
+    <div class="nav-dropdown">
+      <button id="btn-nav-dropdown" class="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+        <strong>Trepando</strong>
+        <span id="nav-dropdown-actual">Home</span>
+        <span class="nav-dropdown-caret">▾</span>
+      </button>
+      <div id="nav-dropdown-menu" class="nav-dropdown-menu" style="display:none;">
+        <button type="button" class="nav-dropdown-item" data-ruta="home">Home</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="pedidos">Pedidos</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="produccion">Control</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="clientes">Clientes &amp; Sedes</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="contactos">Contactos</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="productos">Productos</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="potenciales">Clientes potenciales</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="asistencia">Asistencia</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="analisis">Análisis de Clientes y Pedidos</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="facturas">Facturas</button>
+      </div>
+    </div>
     <div style="display:flex; align-items:center; gap:14px;">
       <span id="user-info" style="font-weight:600;"></span>
       <span id="conn-status">conectando…</span>
@@ -334,22 +388,34 @@
     </div>
   </header>
 
-  <nav class="tabs">
-    <button data-tab="inicio" class="active">Pedidos</button>
-    <button data-tab="produccion">Control</button>
-    <button data-tab="clientes">Clientes &amp; Sedes</button>
-    <button data-tab="contactos">Contactos</button>
-    <button data-tab="productos">Productos</button>
-    <button data-tab="potenciales">Clientes potenciales</button>
-    <button data-tab="asistencia">Asistencia</button>
-    <button data-tab="analisis">Análisis de Clientes y Pedidos</button>
-    <button data-tab="facturas">Facturas</button>
-  </nav>
-
   <main>
 
+    <!-- HOME -->
+    <section id="panel-home" class="panel active">
+      <div class="panel-head">
+        <div>
+          <h2 id="home-saludo">¡Hola!</h2>
+          <p>Elige una sección para empezar.</p>
+        </div>
+      </div>
+      <div class="home-accesos-grid">
+        <a href="#/pedidos" class="home-acceso-card">
+          <strong>Pedidos</strong>
+          <span>Resumen de pedidos y panes a producir por fecha de entrega</span>
+        </a>
+        <a href="#/clientes" class="home-acceso-card">
+          <strong>Clientes &amp; Sedes</strong>
+          <span>Empresas, sedes, productos habilitados y su historial</span>
+        </a>
+        <a href="#/facturas" class="home-acceso-card">
+          <strong>Facturas</strong>
+          <span>Revisa, aprueba y envía facturas de proveedores a Loggro</span>
+        </a>
+      </div>
+    </section>
+
     <!-- INICIO / DASHBOARD -->
-    <section id="panel-inicio" class="panel active">
+    <section id="panel-inicio" class="panel">
       <div id="pedidos-vista-lista">
       <div class="panel-head">
         <div>
@@ -848,27 +914,18 @@
     }
   });
 
-  // ---------- Tabs ----------
-  function activarPestana(tab) {
-    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
-  }
-
-  document.querySelectorAll('nav.tabs button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activarPestana(btn.dataset.tab);
-      // Si había una vista de detalle abierta (#/ruta/id), volver a la lista al cambiar de pestaña manualmente
-      if (location.hash) history.pushState(null, '', location.pathname + location.search);
-      const ruta = RUTA_POR_PESTANA[btn.dataset.tab];
-      const vista = ruta && VISTAS_LISTA_DETALLE[ruta];
-      if (vista) vista.mostrarLista();
-    });
-  });
-
   // ============================================================
-  // PATRÓN "LISTA → DETALLE" (estilo Salesforce) — REUTILIZABLE
+  // NAVEGACIÓN PRINCIPAL: dropdown (estilo Salesforce) + hash como fuente de verdad
   // ============================================================
-  // Para aplicar este patrón a otra pestaña (ej. "productos"):
+  // Cada sección del dropdown corresponde a una "ruta" (el segmento del hash,
+  // ej. #/clientes o #/clientes/123) y a un panelTab (el id real panel-XXX).
+  // El hash es la ÚNICA fuente de verdad de dónde está el usuario: no hay
+  // estado "activo" guardado aparte, así que recargar la página o volver a
+  // entrar aterriza en la misma sección automáticamente. Si no hay hash,
+  // se muestra Home.
+  //
+  // Para registrar una sección nueva (ej. "productos") que use el patrón
+  // lista → detalle:
   //  1. HTML: dentro de <section id="panel-productos">, envuelve la tabla
   //     de lista en un <div id="productos-vista-lista"> y agrega, vacío,
   //     <div id="productos-vista-detalle" style="display:none;"></div>.
@@ -882,65 +939,137 @@
   //       - llama a listaRelacionada(cont, {...}) por cada lista relacionada
   //  4. Escribe mostrarListaProductos() que oculta el detalle, muestra la
   //     lista y llama a tu función de render existente (ej. renderProductos()).
-  //  5. Regístralo una sola vez:
-  //       registrarVistaListaDetalle('productos', {
+  //  5. Regístrala una sola vez, con el título que debe verse en el dropdown:
+  //       registrarSeccion('productos', {
+  //         titulo: 'Productos',
   //         mostrarLista: mostrarListaProductos,
   //         mostrarDetalle: mostrarDetalleProducto
   //       });
-  //     Si el nombre de la ruta (lo que va en el hash) es distinto del
-  //     data-tab real de la pestaña —ej. "Pedidos" vive en data-tab="inicio"—
-  //     pásalo aparte: registrarVistaListaDetalle('pedidos', { ..., panelTab: 'inicio' }).
-  // Con esto, el enrutador de hash (#/ruta/id), la sincronización con las
-  // pestañas y el botón "← Volver a la lista" ya funcionan solos.
+  //     Si el nombre de la ruta es distinto del panel real —ej. "Pedidos"
+  //     vive en panel-inicio— pásalo aparte: registrarSeccion('pedidos', { ..., panelTab: 'inicio' }).
+  //  6. Agrega el botón correspondiente en #nav-dropdown-menu (HTML), con
+  //     data-ruta="productos" — eso ya lo conecta con el dropdown.
+  //
+  // Para una sección simple sin lista/detalle (ej. "Facturas", que ya pinta
+  // su propio contenido), registra solo { titulo } sin mostrarLista/mostrarDetalle.
+  //
   // Para un campo relacionado que solo debe navegar (no editarse ahí mismo,
   // ej. el contacto o el producto de un pedido), usa campoEnlace(...) en vez
   // de campoEditable(...).
   // ============================================================
 
-  const VISTAS_LISTA_DETALLE = {}; // { ruta: { mostrarLista(), mostrarDetalle(id), panelTab } }
-  const RUTA_POR_PESTANA = {}; // { panelTab: ruta } — solo hace falta cuando difieren (ej. "pedidos" vive en la pestaña "inicio")
+  const SECCIONES = {}; // { ruta: { titulo, panelTab, mostrarLista?(), mostrarDetalle?(id) } }
 
-  // `ruta` es el segmento usado en el hash (#/ruta/id). `panelTab` es la pestaña
-  // real (data-tab / panel-XXX) donde vive esa vista; por defecto es igual a `ruta`.
-  function registrarVistaListaDetalle(ruta, { mostrarLista, mostrarDetalle, panelTab = ruta }) {
-    VISTAS_LISTA_DETALLE[ruta] = { mostrarLista, mostrarDetalle, panelTab };
-    RUTA_POR_PESTANA[panelTab] = ruta;
+  function registrarSeccion(ruta, { titulo, mostrarLista, mostrarDetalle, panelTab = ruta }) {
+    SECCIONES[ruta] = { titulo, mostrarLista, mostrarDetalle, panelTab };
+  }
+
+  // Muestra el panel de "ruta" y, si tiene vista de lista, la pinta. No toca el hash
+  // (quien llama ya se encargó de eso, o viene de procesarHash).
+  function activarSeccion(ruta) {
+    const sec = SECCIONES[ruta];
+    if (!sec) return;
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + sec.panelTab));
+    if (sec.mostrarLista) sec.mostrarLista();
+    // Comportamiento preservado de la navegación anterior: refrescar datos al entrar a estas secciones.
+    if (ruta === 'pedidos') cargarPedidos();
+    if (ruta === 'contactos' && !CONTACTOS.length) cargarContactos();
+    marcarSeccionActivaEnMenu(ruta);
+    cerrarMenuNav();
+  }
+
+  function marcarSeccionActivaEnMenu(ruta) {
+    document.querySelectorAll('.nav-dropdown-item').forEach(b => b.classList.toggle('active', b.dataset.ruta === ruta));
+    const sec = SECCIONES[ruta];
+    document.getElementById('nav-dropdown-actual').textContent = ruta === 'home' ? 'Home' : (sec ? sec.titulo : '');
+  }
+
+  function mostrarHome() {
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-home'));
+    document.getElementById('home-saludo').textContent = PERFIL.nombre ? `¡Hola, ${PERFIL.nombre}!` : '¡Hola!';
+    marcarSeccionActivaEnMenu('home');
+    cerrarMenuNav();
+  }
+
+  // Navega a una sección cambiando el hash (fuente de verdad); si el hash ya
+  // es ese (ej. el usuario reabre el dropdown y elige lo mismo), no hay
+  // hashchange automático, así que forzamos la actualización manualmente.
+  function navegarASeccion(ruta) {
+    if (ruta === 'home') { navegarAHome(); return; }
+    if (location.hash === `#/${ruta}`) { activarSeccion(ruta); return; }
+    location.hash = '/' + ruta;
+  }
+
+  function navegarAHome() {
+    if (location.hash) {
+      history.pushState(null, '', location.pathname + location.search);
+    }
+    mostrarHome();
   }
 
   // Refresca la vista de detalle de "ruta" solo si es la que está abierta ahora mismo
   // (para usar después de una acción sobre una lista relacionada, ej. agregar una sede).
   function refrescarDetalleSiAbierto(ruta, id) {
     if (location.hash === `#/${ruta}/${id}`) {
-      VISTAS_LISTA_DETALLE[ruta].mostrarDetalle(id);
+      SECCIONES[ruta].mostrarDetalle(id);
     }
   }
 
   function volverALista(ruta) {
-    if (location.hash.startsWith(`#/${ruta}/`)) {
-      history.pushState(null, '', location.pathname + location.search);
-    }
-    const vista = VISTAS_LISTA_DETALLE[ruta];
-    if (vista) vista.mostrarLista();
+    navegarASeccion(ruta);
   }
 
   function procesarHash() {
-    const m = location.hash.match(/^#\/([a-z0-9_-]+)\/(\d+)$/i);
-    if (m) {
-      const [, ruta, id] = m;
-      const vista = VISTAS_LISTA_DETALLE[ruta];
-      if (vista) {
-        activarPestana(vista.panelTab);
-        vista.mostrarDetalle(Number(id));
+    const hash = location.hash;
+    if (!hash) { mostrarHome(); return; }
+
+    const mDetalle = hash.match(/^#\/([a-z0-9_-]+)\/(\d+)$/i);
+    if (mDetalle) {
+      const [, ruta, id] = mDetalle;
+      const sec = SECCIONES[ruta];
+      if (sec && sec.mostrarDetalle) {
+        activarSeccion(ruta);
+        sec.mostrarDetalle(Number(id));
         return;
       }
     }
-    // Sin hash de detalle (ej. el usuario usó "atrás" del navegador): muestra la
-    // lista de la pestaña activa, si esa pestaña usa este patrón.
-    const tabActivo = document.querySelector('nav.tabs button.active')?.dataset.tab;
-    const rutaActiva = tabActivo && RUTA_POR_PESTANA[tabActivo];
-    const vistaActiva = rutaActiva && VISTAS_LISTA_DETALLE[rutaActiva];
-    if (vistaActiva) vistaActiva.mostrarLista();
+
+    const mLista = hash.match(/^#\/([a-z0-9_-]+)$/i);
+    if (mLista && SECCIONES[mLista[1]]) {
+      activarSeccion(mLista[1]);
+      return;
+    }
+
+    // Hash no reconocido: no dejar al usuario varado, mostrar Home.
+    mostrarHome();
   }
+  window.addEventListener('hashchange', procesarHash);
+
+  // ---------- Dropdown de navegación: abrir/cerrar ----------
+  const btnNavDropdown = document.getElementById('btn-nav-dropdown');
+  const navDropdownMenu = document.getElementById('nav-dropdown-menu');
+
+  function abrirMenuNav() {
+    navDropdownMenu.style.display = 'block';
+    btnNavDropdown.setAttribute('aria-expanded', 'true');
+  }
+  function cerrarMenuNav() {
+    navDropdownMenu.style.display = 'none';
+    btnNavDropdown.setAttribute('aria-expanded', 'false');
+  }
+  btnNavDropdown.addEventListener('click', () => {
+    const abierto = navDropdownMenu.style.display !== 'none';
+    if (abierto) cerrarMenuNav(); else abrirMenuNav();
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-dropdown')) cerrarMenuNav();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrarMenuNav();
+  });
+  document.querySelectorAll('.nav-dropdown-item').forEach(item => {
+    item.addEventListener('click', () => navegarASeccion(item.dataset.ruta));
+  });
   window.addEventListener('hashchange', procesarHash);
 
   // Campo individual editable dentro de una vista de detalle: se muestra
@@ -1085,11 +1214,6 @@
       <div class="campo-detalle-valor">${esc(texto)}</div>`;
     contenedor.appendChild(fila);
   }
-
-  // Recargar pedidos cada vez que se entra a la pestaña "Pedidos", para reflejar cambios hechos en otras pestañas
-  document.querySelector('[data-tab="inicio"]').addEventListener('click', () => {
-    cargarPedidos();
-  });
 
   function toast(msg, isError=false) {
     const t = document.getElementById('toast');
@@ -1433,7 +1557,7 @@
     });
   }
 
-  registrarVistaListaDetalle('pedidos', { mostrarLista: mostrarListaPedidos, mostrarDetalle: mostrarDetallePedido, panelTab: 'inicio' });
+  registrarSeccion('pedidos', { titulo: 'Pedidos', mostrarLista: mostrarListaPedidos, mostrarDetalle: mostrarDetallePedido, panelTab: 'inicio' });
 
   function poblarSelectPedidoForm() {
     const selCliente = document.getElementById('np-cliente');
@@ -1947,7 +2071,7 @@
     });
   }
 
-  registrarVistaListaDetalle('clientes', { mostrarLista: mostrarListaClientes, mostrarDetalle: mostrarDetalleCliente });
+  registrarSeccion('clientes', { titulo: 'Clientes & Sedes', mostrarLista: mostrarListaClientes, mostrarDetalle: mostrarDetalleCliente });
 
   function escAttr(str) {
     return esc(str).replace(/"/g, '&quot;');
@@ -2207,7 +2331,7 @@
     });
   }
 
-  registrarVistaListaDetalle('contactos', { mostrarLista: mostrarListaContactos, mostrarDetalle: mostrarDetalleContacto });
+  registrarSeccion('contactos', { titulo: 'Contactos', mostrarLista: mostrarListaContactos, mostrarDetalle: mostrarDetalleContacto });
 
   async function toggleContactoSede(contactoId, sedeId, marcado) {
     if (marcado) {
@@ -2364,7 +2488,7 @@
     });
   }
 
-  registrarVistaListaDetalle('productos', { mostrarLista: mostrarListaProductos, mostrarDetalle: mostrarDetalleProducto });
+  registrarSeccion('productos', { titulo: 'Productos', mostrarLista: mostrarListaProductos, mostrarDetalle: mostrarDetalleProducto });
 
   window.crearProducto = async function() {
     const nombre = document.getElementById('np-nombre').value.trim();
@@ -2539,7 +2663,12 @@
     campoTextoSimple('Dirección de muestra', 'direccion_muestra');
   }
 
-  registrarVistaListaDetalle('potenciales', { mostrarLista: mostrarListaPotenciales, mostrarDetalle: mostrarDetallePotencial });
+  registrarSeccion('potenciales', { titulo: 'Clientes potenciales', mostrarLista: mostrarListaPotenciales, mostrarDetalle: mostrarDetallePotencial });
+
+  registrarSeccion('produccion', { titulo: 'Control' });
+  registrarSeccion('asistencia', { titulo: 'Asistencia' });
+  registrarSeccion('analisis', { titulo: 'Análisis de Clientes y Pedidos' });
+  registrarSeccion('facturas', { titulo: 'Facturas' });
 
   window.mostrarFormularioProspecto = function() {
     document.getElementById('ncp-form-wrap').style.display = '';
@@ -3257,10 +3386,6 @@
     }
   }
 
-  // Cargar contactos cuando se abre esa pestaña la primera vez
-  document.querySelector('[data-tab="contactos"]').addEventListener('click', () => {
-    if (!CONTACTOS.length) cargarContactos();
-  }, { once: true });
 
   function esc(str) {
     const d = document.createElement('div');
