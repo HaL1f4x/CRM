@@ -3173,8 +3173,9 @@
             <strong style="font-size:15px;">${esc(f.proveedor_nombre || 'Proveedor sin nombre')}</strong>
             <span class="pill ${pillEstadoFactura(f.estado)}">${esc(etiquetaEstadoFactura(f.estado))}</span>
           </div>
+          <div style="font-size:13px; color:var(--texto); font-weight:600; margin-bottom:2px;">N.º ${esc(f.numero_factura || '—')}</div>
           <div style="font-size:13px; color:var(--texto-suave);">
-            Factura ${esc(f.numero_factura || '—')} · ${fecha}${f.tipo_gasto_nombre ? ' · ' + esc(f.tipo_gasto_nombre) : ''}
+            ${fecha}${f.tipo_gasto_nombre ? ' · ' + esc(f.tipo_gasto_nombre) : ''}
           </div>
         </div>
         <div style="text-align:right;">
