@@ -200,6 +200,31 @@
     cursor: pointer;
   }
   .nav-dropdown-item:hover { background: var(--masa); }
+
+  /* Grupos colapsables dentro del dropdown (Trepando, Contabilidad, Costeo) */
+  .nav-separador { height: 1px; background: var(--linea); margin: 6px 8px; }
+  .nav-grupo-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--texto);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .nav-grupo-titulo:hover { background: var(--masa); }
+  .nav-grupo-titulo.tiene-activo { color: var(--costra-2); }
+  .nav-grupo-titulo .nav-grupo-caret { font-size: 11px; color: var(--texto-suave); transition: transform 150ms ease; }
+  .nav-grupo-titulo[aria-expanded="true"] .nav-grupo-caret { transform: rotate(180deg); }
+  .nav-grupo-items { margin: 0 0 6px 14px; padding-left: 8px; border-left: 2px solid var(--linea); }
+  .nav-grupo-items .nav-dropdown-item { padding: 8px 12px; font-size: 13.5px; }
   .nav-dropdown-item.active { background: rgba(244,162,12,0.1); color: var(--costra-2); font-weight: 600; }
 
   /* Campanita de notificaciones, en el header */
@@ -457,6 +482,12 @@
   .campo-detalle-valor input.mini, .campo-detalle-valor select.mini, .campo-detalle-valor textarea.mini { width: auto; min-width: 180px; }
   button.campo-detalle-lapiz { background: none; border: none; cursor: pointer; color: var(--texto-suave); font-size: 13px; padding: 2px 4px; line-height: 1; }
   button.campo-detalle-lapiz:hover { color: var(--costra-2); }
+  /* Celdas editables en línea dentro de una tabla de lista (clic en ✎ → input + Guardar/Cancelar) */
+  .celda-editable, .celda-editando { display: inline-flex; align-items: center; gap: 6px; }
+  .celda-editando { flex-wrap: wrap; }
+  .celda-editando input.mini { width: 110px; }
+  .celda-editando select.mini { width: auto; min-width: 170px; }
+  .celda-sin-valor { color: var(--texto-suave); }
   .lista-relacionada + .lista-relacionada { border-top: 1px solid var(--linea); margin-top: 14px; padding-top: 14px; }
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -490,24 +521,44 @@
   <header class="topbar">
     <div class="nav-dropdown">
       <button id="btn-nav-dropdown" class="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false">
-        <strong>Trepando</strong>
+        <strong>Amasamos</strong>
         <span id="nav-dropdown-actual">Home</span>
         <span class="nav-dropdown-caret">▾</span>
       </button>
       <div id="nav-dropdown-menu" class="nav-dropdown-menu" style="display:none;">
         <button type="button" class="nav-dropdown-item" data-ruta="home">Home</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="pedidos">Pedidos</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="produccion">Control</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="clientes">Clientes &amp; Sedes</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="contactos">Contactos</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="productos">Productos</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="potenciales">Clientes potenciales</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="asistencia">Asistencia</button>
         <button type="button" class="nav-dropdown-item" data-ruta="analisis">Análisis de Clientes y Pedidos</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="facturas">Facturas</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="compras">Detalle de Compras</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="recetas">Recetas</button>
-        <button type="button" class="nav-dropdown-item" data-ruta="ingredientes">Ingredientes</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="asistencia">Asistencia</button>
+
+        <div class="nav-separador"></div>
+
+        <div class="nav-grupo">
+          <button type="button" class="nav-grupo-titulo" aria-expanded="false">Trepando<span class="nav-grupo-caret">▾</span></button>
+          <div class="nav-grupo-items" hidden>
+            <button type="button" class="nav-dropdown-item" data-ruta="pedidos">Pedidos</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="clientes">Clientes &amp; Sedes</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="contactos">Contactos</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="produccion">Control</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="productos">Productos</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="potenciales">Clientes potenciales</button>
+          </div>
+        </div>
+
+        <div class="nav-grupo">
+          <button type="button" class="nav-grupo-titulo" aria-expanded="false">Contabilidad<span class="nav-grupo-caret">▾</span></button>
+          <div class="nav-grupo-items" hidden>
+            <button type="button" class="nav-dropdown-item" data-ruta="facturas">Facturas</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="compras">Detalle de Compras</button>
+          </div>
+        </div>
+
+        <div class="nav-grupo">
+          <button type="button" class="nav-grupo-titulo" aria-expanded="false">Costeo<span class="nav-grupo-caret">▾</span></button>
+          <div class="nav-grupo-items" hidden>
+            <button type="button" class="nav-dropdown-item" data-ruta="recetas">Recetas</button>
+            <button type="button" class="nav-dropdown-item" data-ruta="ingredientes">Ingredientes</button>
+          </div>
+        </div>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:14px;">
@@ -1023,7 +1074,7 @@
         <div style="overflow-x:auto;">
           <table>
             <thead>
-              <tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Costo unitario</th><th>Unidad</th><th>Empresa</th></tr>
+              <tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Total factura</th><th>Costo unitario</th><th>Unidad</th><th>Ingrediente</th></tr>
             </thead>
             <tbody id="tbody-compras"></tbody>
           </table>
@@ -1203,7 +1254,9 @@
   //     Si el nombre de la ruta es distinto del panel real —ej. "Pedidos"
   //     vive en panel-inicio— pásalo aparte: registrarSeccion('pedidos', { ..., panelTab: 'inicio' }).
   //  6. Agrega el botón correspondiente en #nav-dropdown-menu (HTML), con
-  //     data-ruta="productos" — eso ya lo conecta con el dropdown.
+  //     data-ruta="productos", dentro del .nav-grupo que corresponda (Trepando,
+  //     Contabilidad, Costeo) o suelto al inicio si no pertenece a ningún grupo —
+  //     eso ya lo conecta con el dropdown.
   //
   // Para una sección simple sin lista/detalle (ej. "Facturas", que ya pinta
   // su propio contenido), registra solo { titulo } sin mostrarLista/mostrarDetalle.
@@ -1235,9 +1288,26 @@
 
   function marcarSeccionActivaEnMenu(ruta) {
     document.querySelectorAll('.nav-dropdown-item').forEach(b => b.classList.toggle('active', b.dataset.ruta === ruta));
+    // El grupo que contiene la sección activa se resalta y se deja abierto; los demás conservan lo que el usuario haya abierto o cerrado.
+    document.querySelectorAll('.nav-grupo').forEach(grupo => {
+      const contieneActivo = !!grupo.querySelector(`.nav-dropdown-item[data-ruta="${ruta}"]`);
+      grupo.querySelector('.nav-grupo-titulo').classList.toggle('tiene-activo', contieneActivo);
+      if (contieneActivo) alternarGrupoNav(grupo, true);
+    });
     const sec = SECCIONES[ruta];
     document.getElementById('nav-dropdown-actual').textContent = ruta === 'home' ? 'Home' : (sec ? sec.titulo : '');
   }
+
+  function alternarGrupoNav(grupo, abrir) {
+    const titulo = grupo.querySelector('.nav-grupo-titulo');
+    const items = grupo.querySelector('.nav-grupo-items');
+    const abierto = abrir !== undefined ? abrir : titulo.getAttribute('aria-expanded') !== 'true';
+    titulo.setAttribute('aria-expanded', String(abierto));
+    items.hidden = !abierto;
+  }
+  document.querySelectorAll('.nav-grupo-titulo').forEach(titulo => {
+    titulo.addEventListener('click', () => alternarGrupoNav(titulo.closest('.nav-grupo')));
+  });
 
   function mostrarHome() {
     document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-home'));
@@ -3851,19 +3921,144 @@
     renderCompras();
   }
 
+  // Celda de tabla editable en línea (componente reutilizable para listas): se ve como texto + ✎;
+  // al hacer clic pasa a input/select con Guardar/Cancelar (Enter guarda, Escape cancela).
+  // `onGuardar(nuevoValor)` devuelve true si guardó (la celda muestra el valor nuevo) o false si
+  // falló (se queda en edición para corregir).
+  function celdaEditable(td, { valor, tipo = 'text', opcionesSelect = null, formatoVista = null, onGuardar }) {
+    pintarVista();
+
+    function pintarVista() {
+      const vacio = valor === null || valor === undefined || valor === '';
+      const mostrado = formatoVista ? formatoVista(valor) : (vacio ? '<span class="celda-sin-valor">—</span>' : esc(String(valor)));
+      td.innerHTML = `<span class="celda-editable"><span>${mostrado}</span><button class="campo-detalle-lapiz" type="button" title="Editar">✎</button></span>`;
+      td.querySelector('.campo-detalle-lapiz').addEventListener('click', pintarEdicion);
+    }
+
+    function pintarEdicion() {
+      const entrada = opcionesSelect
+        ? `<select class="mini" data-celda-input>${opcionesSelect.map(o => `<option value="${escAttr(String(o.value))}" ${String(o.value) === String(valor ?? '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+        : `<input type="${tipo}" ${tipo === 'number' ? 'step="any"' : ''} class="mini" data-celda-input value="${escAttr(valor ?? '')}">`;
+      td.innerHTML = `<span class="celda-editando">${entrada}<button class="link" type="button" data-celda-guardar>Guardar</button><button class="link" type="button" data-celda-cancelar>Cancelar</button></span>`;
+      const campo = td.querySelector('[data-celda-input]');
+      const btnGuardar = td.querySelector('[data-celda-guardar]');
+      td.querySelector('[data-celda-cancelar]').addEventListener('click', pintarVista);
+      campo.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') btnGuardar.click();
+        if (e.key === 'Escape') pintarVista();
+      });
+      btnGuardar.addEventListener('click', async () => {
+        const nuevo = campo.value;
+        btnGuardar.disabled = true;
+        if (await onGuardar(nuevo)) {
+          valor = nuevo;
+          pintarVista();
+        } else {
+          btnGuardar.disabled = false;
+        }
+      });
+      campo.focus();
+    }
+  }
+
+  // null mientras no se sepa si detalle_compras tiene la columna costo_confiable (ver guardarCostoUnitarioCompra).
+  let comprasTieneCostoConfiable = null;
+
+  // Una escritura que RLS bloquea no da error, solo cero filas: se verifica para no mostrar un éxito falso.
+  async function actualizarCompra(id, cambios) {
+    const { data, error } = await sb.from('detalle_compras').update(cambios).eq('id', id).select('id');
+    return { data, error, aplicado: !error && !!data && data.length > 0 };
+  }
+
+  // Editar a mano el costo unitario lo confirma una persona: además de guardar el valor se marca
+  // costo_normalizado = true y costo_confiable = true, para que el resto del sistema lo use al costear recetas.
+  async function guardarCostoUnitarioCompra(c, costo) {
+    const cambios = { costo_unitario: costo, costo_normalizado: true };
+    if (comprasTieneCostoConfiable !== false) cambios.costo_confiable = true;
+    let resultado = await actualizarCompra(c.id, cambios);
+    let faltaColumna = false;
+    if (resultado.error && /costo_confiable/.test(resultado.error.message || '')) {
+      // La columna no existe en la tabla: se guarda lo demás en vez de perder la edición.
+      comprasTieneCostoConfiable = false;
+      faltaColumna = true;
+      delete cambios.costo_confiable;
+      resultado = await actualizarCompra(c.id, cambios);
+    }
+    if (resultado.error) { toast('Error: ' + resultado.error.message, true); return false; }
+    if (!resultado.aplicado) { toast('No se pudo guardar el costo (revisa los permisos)', true); return false; }
+    Object.assign(c, cambios);
+    if (faltaColumna || comprasTieneCostoConfiable === false) {
+      toast('Costo guardado y marcado como normalizado, pero la columna costo_confiable no existe en detalle_compras', true);
+    } else {
+      comprasTieneCostoConfiable = true;
+      toast('Costo guardado y confirmado');
+    }
+    return true;
+  }
+
   function renderCompras() {
     const tbody = document.getElementById('tbody-compras');
-    tbody.innerHTML = COMPRAS.length
-      ? COMPRAS.map(c => `
-        <tr>
-          <td>${formatoFechaCompra(c.fecha)}</td>
-          <td><a href="#/compras/${c.id}"><strong>${esc(c.producto || 'Sin nombre')}</strong></a></td>
-          <td>${esc(c.proveedor || '—')}</td>
-          <td>${formatoCosto(c.costo_unitario)}</td>
-          <td>${esc(c.unidad || '—')}</td>
-          <td>${esc(c.empresa || '—')}</td>
-        </tr>`).join('')
-      : '<tr><td colspan="6" class="empty">No hay compras para estos filtros.</td></tr>';
+    tbody.innerHTML = '';
+    if (!COMPRAS.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay compras para estos filtros.</td></tr>';
+    }
+    COMPRAS.forEach(c => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatoFechaCompra(c.fecha)}</td>
+        <td><a href="#/compras/${c.id}"><strong>${esc(c.producto || 'Sin nombre')}</strong></a></td>
+        <td>${esc(c.proveedor || '—')}</td>
+        <td>${formatoCosto(c.total_factura)}</td>
+        <td data-celda="costo"></td>
+        <td data-celda="unidad"></td>
+        <td data-celda="ingrediente"></td>`;
+      tbody.appendChild(tr);
+
+      celdaEditable(tr.querySelector('[data-celda="costo"]'), {
+        valor: c.costo_unitario,
+        tipo: 'number',
+        formatoVista: (v) => (v === null || v === undefined || v === '') ? '<span class="celda-sin-valor">—</span>' : formatoCosto(v),
+        onGuardar: async (nuevo) => {
+          const costo = Number(nuevo);
+          if (nuevo === '' || Number.isNaN(costo) || costo < 0) { toast('Escribe un costo unitario válido (0 o mayor)', true); return false; }
+          return guardarCostoUnitarioCompra(c, costo);
+        }
+      });
+
+      celdaEditable(tr.querySelector('[data-celda="unidad"]'), {
+        valor: c.unidad,
+        onGuardar: async (nuevo) => {
+          const unidad = nuevo.trim() || null;
+          const r = await actualizarCompra(c.id, { unidad });
+          if (r.error) { toast('Error: ' + r.error.message, true); return false; }
+          if (!r.aplicado) { toast('No se pudo guardar la unidad (revisa los permisos)', true); return false; }
+          c.unidad = unidad;
+          toast('Unidad actualizada');
+          return true;
+        }
+      });
+
+      const opcionesIngrediente = [{ value: '', label: '— Sin asignar —' }, ...INGREDIENTES.map(i => ({ value: i.id, label: i.nombre }))];
+      if (c.ingrediente_id !== null && c.ingrediente_id !== undefined && !INGREDIENTES.some(i => String(i.id) === String(c.ingrediente_id))) {
+        opcionesIngrediente.push({ value: c.ingrediente_id, label: `Ingrediente #${c.ingrediente_id} (no encontrado)` });
+      }
+      celdaEditable(tr.querySelector('[data-celda="ingrediente"]'), {
+        valor: c.ingrediente_id ?? '',
+        opcionesSelect: opcionesIngrediente,
+        formatoVista: (v) => (v === null || v === undefined || v === '')
+          ? '<span class="celda-sin-valor">— Sin asignar —</span>'
+          : esc(opcionesIngrediente.find(o => String(o.value) === String(v))?.label || `Ingrediente #${v}`),
+        onGuardar: async (nuevo) => {
+          const ingredienteId = nuevo === '' ? null : Number(nuevo);
+          const r = await actualizarCompra(c.id, { ingrediente_id: ingredienteId });
+          if (r.error) { toast('Error: ' + r.error.message, true); return false; }
+          if (!r.aplicado) { toast('No se pudo guardar el ingrediente (revisa los permisos)', true); return false; }
+          c.ingrediente_id = ingredienteId;
+          toast('Ingrediente actualizado');
+          return true;
+        }
+      });
+    });
 
     const totalPaginas = Math.max(1, Math.ceil(comprasTotal / COMPRAS_POR_PAGINA));
     document.getElementById('compras-paginacion-info').textContent = comprasTotal
