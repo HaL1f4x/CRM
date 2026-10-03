@@ -202,6 +202,130 @@
   .nav-dropdown-item:hover { background: var(--masa); }
   .nav-dropdown-item.active { background: rgba(244,162,12,0.1); color: var(--costra-2); font-weight: 600; }
 
+  /* Campanita de notificaciones, en el header */
+  header.topbar { position: relative; }
+  .notif-wrap { position: relative; }
+  .notif-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    color: var(--masa);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+  .notif-btn:hover { background: rgba(255,255,255,0.08); }
+  .notif-btn:focus-visible { outline: 2px solid var(--costra); outline-offset: 2px; }
+  header.topbar .notif-badge {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--radius-full);
+    background: var(--costra);
+    color: var(--horno);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .notif-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 360px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: white;
+    color: var(--texto);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    z-index: 50;
+  }
+  .notif-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--linea);
+    position: sticky;
+    top: 0;
+    background: white;
+  }
+  .notif-panel-head strong { font-size: 14px; }
+  .notif-panel-head button.link:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+  .notif-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--linea);
+    padding: 12px 16px 12px 30px;
+    font-family: inherit;
+    color: var(--texto-suave);
+    cursor: pointer;
+    position: relative;
+  }
+  .notif-item:hover { background: var(--masa); }
+  .notif-item.no-leida { color: var(--texto); font-weight: 600; }
+  .notif-item.no-leida::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 18px;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--costra);
+  }
+  .notif-item .notif-mensaje { display: block; font-size: 13px; line-height: 1.4; color: inherit; }
+  .notif-item .notif-tiempo { display: block; margin-top: 4px; font-size: 11px; font-weight: 400; color: var(--texto-suave); }
+  .notif-vacio { padding: 28px 16px; text-align: center; font-size: 13px; color: var(--texto-suave); }
+
+  /* Botón de refrescar: esquina superior derecha del encabezado de cada sección */
+  .btn-refrescar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-full);
+    color: var(--texto-suave);
+    cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+  .btn-refrescar:hover:not(:disabled) { border-color: var(--costra); color: var(--costra-2); }
+  .btn-refrescar:focus-visible { outline: 2px solid var(--costra); outline-offset: 2px; }
+  .btn-refrescar:disabled { cursor: default; }
+  .btn-refrescar.refrescando svg { animation: girar-refrescar 0.8s linear infinite; }
+  @keyframes girar-refrescar { to { transform: rotate(360deg); } }
+  .spinner-mini {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    vertical-align: -2px;
+    border: 2px solid #E3B769;
+    border-top-color: #8A5A12;
+    border-radius: 50%;
+    animation: girar-refrescar 0.8s linear infinite;
+  }
+
   main { padding: 32px 28px 28px; max-width: 1600px; margin: 0 auto; }
   .panel { display: none; }
   .panel.active { display: block; }
@@ -231,6 +355,8 @@
     .two-col-grid { grid-template-columns: 1fr; }
     header.topbar { padding: 14px 16px; }
     .nav-dropdown-menu { left: 0; right: 0; min-width: 0; }
+    .notif-wrap { position: static; }
+    .notif-panel { left: 16px; right: 16px; width: auto; top: 100%; }
   }
 
   .panel-head {
@@ -379,9 +505,25 @@
         <button type="button" class="nav-dropdown-item" data-ruta="asistencia">Asistencia</button>
         <button type="button" class="nav-dropdown-item" data-ruta="analisis">Análisis de Clientes y Pedidos</button>
         <button type="button" class="nav-dropdown-item" data-ruta="facturas">Facturas</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="compras">Detalle de Compras</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="recetas">Recetas</button>
+        <button type="button" class="nav-dropdown-item" data-ruta="ingredientes">Ingredientes</button>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:14px;">
+      <div class="notif-wrap">
+        <button id="btn-notif" class="notif-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span id="notif-badge" class="notif-badge" style="display:none;">0</span>
+        </button>
+        <div id="notif-panel" class="notif-panel" style="display:none;">
+          <div class="notif-panel-head">
+            <strong>Notificaciones</strong>
+            <button id="btn-notif-todas" class="link" type="button">Marcar todas como leídas</button>
+          </div>
+          <div id="notif-lista"></div>
+        </div>
+      </div>
       <span id="user-info" style="font-weight:600;"></span>
       <span id="conn-status">conectando…</span>
       <button id="btn-logout" style="background:none; border:1px solid #55453590; color:var(--masa); padding:6px 12px; border-radius:var(--radius-sm); font-size:12px; cursor:pointer; transition:border-color 150ms ease, background-color 150ms ease;">Cerrar sesión</button>
@@ -841,14 +983,126 @@
           <option value="enviada">Enviadas</option>
           <option value="">Todas</option>
         </select>
+        <button class="ghost" id="btn-consultar-facturas">Consultar facturas</button>
         <button class="primary" id="btn-aprobar-todo">Aprobar todo</button>
         <button class="ghost" id="btn-enviar-loggro">Enviar aprobadas a Loggro</button>
         <span id="fact-rango-label" style="margin-left:auto; font-size:13px; color:var(--texto-suave);"></span>
       </div>
 
       <div id="loggro-resultado" style="display:none;"></div>
+      <div id="drive-resultado" style="display:none;"></div>
 
       <div id="facturas-lista" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </section>
+
+    <!-- DETALLE DE COMPRAS -->
+    <section id="panel-compras" class="panel">
+      <div id="compras-vista-lista">
+        <div class="panel-head">
+          <div>
+            <h2>Detalle de Compras</h2>
+            <p>Líneas de compra extraídas automáticamente de las facturas. Haz clic en un producto para ver su ficha completa.</p>
+          </div>
+        </div>
+
+        <div class="row-form" style="align-items:flex-end;">
+          <select class="mini" id="compras-filtro-empresa" style="min-width:150px;"><option value="">Todas las empresas</option></select>
+          <select class="mini" id="compras-filtro-proveedor" style="min-width:170px;"><option value="">Todos los proveedores</option></select>
+          <span style="display:flex; flex-direction:column; gap:3px;">
+            <label for="compras-filtro-desde" style="font-size:11px; color:var(--texto-suave);">Desde</label>
+            <input type="date" class="mini" id="compras-filtro-desde" style="width:150px;">
+          </span>
+          <span style="display:flex; flex-direction:column; gap:3px;">
+            <label for="compras-filtro-hasta" style="font-size:11px; color:var(--texto-suave);">Hasta</label>
+            <input type="date" class="mini" id="compras-filtro-hasta" style="width:150px;">
+          </span>
+          <input type="search" id="compras-filtro-texto" placeholder="Buscar producto…" style="min-width:180px;">
+          <button class="ghost" id="btn-compras-limpiar">Limpiar filtros</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Costo unitario</th><th>Unidad</th><th>Empresa</th></tr>
+            </thead>
+            <tbody id="tbody-compras"></tbody>
+          </table>
+        </div>
+
+        <div id="compras-paginacion" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px;">
+          <span id="compras-paginacion-info" style="font-size:13px; color:var(--texto-suave);"></span>
+          <span style="display:flex; gap:8px;">
+            <button class="ghost" id="btn-compras-anterior">← Anterior</button>
+            <button class="ghost" id="btn-compras-siguiente">Siguiente →</button>
+          </span>
+        </div>
+      </div>
+      <div id="compras-vista-detalle" style="display:none;"></div>
+    </section>
+
+    <!-- RECETAS -->
+    <section id="panel-recetas" class="panel">
+      <div id="recetas-vista-lista">
+        <div class="panel-head">
+          <div>
+            <h2>Recetas</h2>
+            <p>Recetas con sus componentes y su costo. Haz clic en una receta para ver su ficha, editar componentes y recalcular el costo.</p>
+          </div>
+        </div>
+
+        <button class="primary" id="btn-nueva-receta">+ Nueva receta</button>
+
+        <div class="row-form" id="nr-form-wrap" style="display:none; align-items:flex-end;">
+          <input type="text" id="nr-nombre" placeholder="Nombre de la receta">
+          <input type="number" step="any" id="nr-porciones" placeholder="Rendimiento (porciones)" style="width:190px;">
+          <input type="number" step="any" id="nr-cantidad" placeholder="Rendimiento (cantidad)" style="width:190px;">
+          <input type="text" id="nr-unidad" placeholder="Unidad (ej. kg)" style="width:130px;">
+          <input type="text" id="nr-notas" placeholder="Notas">
+          <button class="primary" id="btn-crear-receta">Crear receta</button>
+          <button class="ghost" id="btn-cancelar-receta">Cancelar</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Costo calculado</th><th>Último cálculo</th></tr>
+            </thead>
+            <tbody id="tbody-recetas"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="recetas-vista-detalle" style="display:none;"></div>
+    </section>
+
+    <!-- INGREDIENTES -->
+    <section id="panel-ingredientes" class="panel">
+      <div id="ingredientes-vista-lista">
+        <div class="panel-head">
+          <div>
+            <h2>Ingredientes</h2>
+            <p>Catálogo de ingredientes con su costo actual. Haz clic en un ingrediente para ver su ficha y su historial de compras.</p>
+          </div>
+        </div>
+
+        <button class="primary" id="btn-nuevo-ingrediente">+ Agregar ingrediente</button>
+
+        <div class="row-form" id="ni-form-wrap" style="display:none; align-items:flex-end;">
+          <input type="text" id="ni-nombre" placeholder="Nombre del ingrediente">
+          <input type="text" id="ni-unidad" placeholder="Unidad estándar (ej. kg)" style="width:190px;">
+          <button class="primary" id="btn-crear-ingrediente">Crear ingrediente</button>
+          <button class="ghost" id="btn-cancelar-ingrediente">Cancelar</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Unidad</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="tbody-ingredientes"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="ingredientes-vista-detalle" style="display:none;"></div>
     </section>
 
   </main>
@@ -907,6 +1161,7 @@
       }
     } else {
       appIniciada = false;
+      detenerSondeoNotificaciones();
       PERFIL = { nombre: null, rol: null };
       document.getElementById('app').style.display = 'none';
       document.getElementById('login-screen').style.display = 'flex';
@@ -1050,6 +1305,7 @@
   const navDropdownMenu = document.getElementById('nav-dropdown-menu');
 
   function abrirMenuNav() {
+    cerrarPanelNotif();
     navDropdownMenu.style.display = 'block';
     btnNavDropdown.setAttribute('aria-expanded', 'true');
   }
@@ -1187,7 +1443,8 @@
         <button class="link" data-volver-lista type="button">← Volver a la lista</button>
         <h2 style="margin-top:6px;">${esc(titulo)}</h2>
         ${subtitulo ? `<p>${esc(subtitulo)}</p>` : ''}
-      </div>`;
+      </div>
+      ${botonRefrescarHTML(tab)}`;
     header.querySelector('[data-volver-lista]').addEventListener('click', () => volverALista(tab));
     contenedor.appendChild(header);
   }
@@ -1238,6 +1495,14 @@
   let PROVEEDORES = [];
   let FORMULAS = [];
   let PRESENTACIONES = [];
+  let COMPRAS = [];
+  let INGREDIENTES = [];
+  let COMPRAS_OPCIONES = { empresas: [], proveedores: [] };
+  let comprasPagina = 0;
+  let comprasTotal = 0;
+  let comprasSolicitud = 0;
+  let RECETAS = [];
+  const COMPRAS_POR_PAGINA = 25;
   let rangoDesde, rangoHasta;
   let rangoProdDesde, rangoProdHasta;
   let rangoAsistDesde, rangoAsistHasta;
@@ -1253,12 +1518,13 @@
     hoy.setHours(0,0,0,0);
     document.getElementById('lp-fecha').value = toISODate(hoy);
     document.getElementById('en-fecha').value = toISODate(hoy);
-    await Promise.all([cargarFormulas(), cargarPresentaciones(), cargarClienteProducto(), cargarClientesPotenciales(), cargarTiposGasto(), cargarProveedores()]);
+    await Promise.all([cargarFormulas(), cargarPresentaciones(), cargarClienteProducto(), cargarClientesPotenciales(), cargarTiposGasto(), cargarProveedores(), cargarIngredientes(), cargarOpcionesCompras(), cargarRecetas()]);
     await cargarProductos();
     await cargarClientes();
     await cargarContactos();
     await Promise.all([cargarPedidos(), cargarProduccion(), cargarAsistencia(), cargarAnalisis(), cargarFacturas()]);
     document.getElementById('conn-status').textContent = 'conectado';
+    iniciarSondeoNotificaciones();
     procesarHash(); // soporta abrir la app directo en un link de detalle, ej. #/clientes/123
   }
 
@@ -3387,6 +3653,1132 @@
     }
   }
 
+  // ---------- CONSULTAR FACTURAS (carpeta de Drive) ----------
+  document.getElementById('btn-consultar-facturas').addEventListener('click', consultarFacturasDrive);
+
+  // La respuesta de leer-facturas-drive no tiene un contrato documentado en el CRM: solo
+  // `pendientes_para_proxima_corrida` es un nombre confirmado. Lo demás se busca bajo los nombres
+  // más probables, y todo campo que no se reconozca se muestra tal cual, para no mostrar ceros
+  // falsos si el nombre real es otro.
+  const CAMPOS_RESUMEN_DRIVE = [
+    { etiqueta: 'Carpeta revisada', claves: ['carpeta_revisada', 'carpeta', 'folder', 'carpeta_nombre', 'carpeta_id'] },
+    { etiqueta: 'Archivos encontrados', claves: ['archivos_encontrados', 'archivos', 'total_archivos', 'encontrados', 'archivos_en_carpeta'] },
+    { etiqueta: 'Facturas nuevas procesadas', claves: ['facturas_nuevas', 'nuevas', 'procesadas', 'facturas_procesadas', 'facturas_nuevas_procesadas', 'nuevas_procesadas'] },
+    { etiqueta: 'Errores', claves: ['errores', 'errors', 'fallidas'], esErrores: true }
+  ];
+
+  function valorLegible(v) {
+    if (v === null || v === undefined || v === '') return '—';
+    if (typeof v === 'object') return JSON.stringify(v);
+    return String(v);
+  }
+
+  // Un error puede venir como texto o como objeto {archivo, motivo}; si no se reconoce, se muestra completo.
+  function textoDeError(d) {
+    if (d && typeof d === 'object') {
+      const quien = d.archivo || d.nombre || d.file || d.id;
+      const motivo = d.motivo || d.error || d.mensaje || d.message;
+      if (quien && motivo) return `${quien}: ${motivo}`;
+    }
+    return valorLegible(d);
+  }
+
+  function pintarResultadoDrive(data) {
+    const box = document.getElementById('drive-resultado');
+    if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+      box.style.cssText = 'display:block; margin-bottom:16px; padding:12px 16px; background:white; border:1px solid var(--linea); border-left:4px solid var(--ok); border-radius:var(--radius-sm); font-size:13px;';
+      box.innerHTML = `<div style="font-weight:700; margin-bottom:6px;">Consulta de Drive terminada</div><div>${esc(valorLegible(data))}</div>`;
+      return { hayErrores: false, pendientes: 0 };
+    }
+
+    const usadas = new Set(['pendientes_para_proxima_corrida']);
+    let hayErrores = false;
+    const filas = [];
+    CAMPOS_RESUMEN_DRIVE.forEach(campo => {
+      const clave = campo.claves.find(k => data[k] !== undefined);
+      if (!clave) return;
+      usadas.add(clave);
+      const v = data[clave];
+      if (campo.esErrores) {
+        const detalle = Array.isArray(v) ? v : (typeof v === 'string' && v ? [v] : []);
+        const cantidad = Array.isArray(v) ? v.length : (typeof v === 'number' ? v : detalle.length);
+        if (cantidad > 0) hayErrores = true;
+        filas.push(`<li><strong>${campo.etiqueta}:</strong> ${cantidad}${detalle.length ? `<ul style="margin:4px 0 0; padding-left:18px;">${detalle.map(d => `<li>${esc(textoDeError(d))}</li>`).join('')}</ul>` : ''}</li>`);
+      } else {
+        filas.push(`<li><strong>${campo.etiqueta}:</strong> ${esc(valorLegible(v))}</li>`);
+      }
+    });
+    Object.keys(data).filter(k => !usadas.has(k)).forEach(k => {
+      filas.push(`<li style="color:var(--texto-suave);"><strong>${esc(k)}:</strong> ${esc(valorLegible(data[k]))}</li>`);
+    });
+
+    const bruto = data.pendientes_para_proxima_corrida;
+    const pendientes = Array.isArray(bruto) ? bruto.length : (Number(bruto) || 0);
+    let avisoPendientes = '';
+    if (pendientes > 0) {
+      avisoPendientes = `<div style="margin-top:10px; padding:10px 12px; background:#FBE8C6; border:1px solid #E3B769; border-radius:var(--radius-sm); color:#8A5A12;">Quedan <strong>${pendientes}</strong> archivo(s) por procesar. Puedes volver a presionar «Consultar facturas» para seguir, o el cron automático los recogerá después.</div>`;
+    } else if (bruto !== undefined) {
+      avisoPendientes = '<div style="margin-top:10px; color:var(--texto-suave);">No quedan archivos pendientes para la próxima corrida.</div>';
+    }
+
+    const conAdvertencia = hayErrores || pendientes > 0;
+    box.style.cssText = `display:block; margin-bottom:16px; padding:12px 16px; background:white; border:1px solid var(--linea); border-left:4px solid ${hayErrores ? 'var(--error)' : (pendientes > 0 ? '#E3B769' : 'var(--ok)')}; border-radius:var(--radius-sm); font-size:13px;`;
+    box.innerHTML = `
+      <div style="font-weight:700; margin-bottom:6px;">Consulta de Drive terminada${conAdvertencia ? '' : ' sin novedades pendientes'}</div>
+      <ul style="margin:0; padding-left:18px; line-height:1.6;">${filas.join('')}</ul>
+      ${avisoPendientes}`;
+    return { hayErrores, pendientes };
+  }
+
+  // Si la función responde con error HTTP, el cuerpo suele traer el motivo real.
+  async function mensajeDeErrorFuncion(error) {
+    try {
+      if (error.context && typeof error.context.json === 'function') {
+        const cuerpo = await error.context.json();
+        return cuerpo.error || cuerpo.mensaje || cuerpo.message || JSON.stringify(cuerpo);
+      }
+    } catch (_) { /* el cuerpo no era JSON: se usa el mensaje genérico */ }
+    return error.message;
+  }
+
+  async function consultarFacturasDrive() {
+    const btn = document.getElementById('btn-consultar-facturas');
+    const box = document.getElementById('drive-resultado');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Consultando…';
+    box.style.cssText = 'display:block; margin-bottom:16px; padding:12px 16px; background:#FBE8C6; border:1px solid #E3B769; border-radius:var(--radius-sm); font-size:13px; color:#8A5A12;';
+    box.innerHTML = '<span class="spinner-mini"></span>Revisando carpeta de Drive… (puede tardar hasta un minuto)';
+    try {
+      const { data, error } = await sb.functions.invoke('leer-facturas-drive', { method: 'POST' });
+      if (error) {
+        const motivo = await mensajeDeErrorFuncion(error);
+        box.style.cssText = 'display:block; margin-bottom:16px; padding:12px 16px; background:white; border:1px solid var(--linea); border-left:4px solid var(--error); border-radius:var(--radius-sm); font-size:13px;';
+        box.innerHTML = `<div style="font-weight:700; margin-bottom:4px;">No se pudo consultar la carpeta de Drive</div><div>${esc(motivo)}</div>`;
+        toast('Error consultando facturas: ' + motivo, true);
+        return;
+      }
+      const { hayErrores } = pintarResultadoDrive(data);
+      toast(hayErrores ? 'Consulta terminada, con errores' : 'Consulta de facturas terminada', hayErrores);
+      await cargarFacturas();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  }
+
+
+  // ---------- DETALLE DE COMPRAS ----------
+  // Los registros de detalle_compras entran solos por un proceso de IA: aquí solo se consultan y corrigen, no se crean.
+  async function cargarIngredientes() {
+    const { data, error } = await sb.from('ingredientes').select('id, nombre, unidad_estandar, activo').order('nombre');
+    if (error) { toast('Error cargando ingredientes: ' + error.message, true); return; }
+    INGREDIENTES = data || [];
+    renderIngredientes();
+  }
+
+  // Valores únicos de empresa y proveedor para los filtros (se leen en bloques de 1000, el máximo por consulta).
+  async function cargarOpcionesCompras() {
+    const empresas = new Set();
+    const proveedores = new Set();
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await sb.from('detalle_compras').select('empresa, proveedor').order('id').range(desde, desde + 999);
+      if (error) { toast('Error cargando filtros de compras: ' + error.message, true); return; }
+      (data || []).forEach(r => {
+        if (r.empresa) empresas.add(r.empresa);
+        if (r.proveedor) proveedores.add(r.proveedor);
+      });
+      if (!data || data.length < 1000) break;
+    }
+    COMPRAS_OPCIONES = {
+      empresas: [...empresas].sort((a, b) => a.localeCompare(b, 'es')),
+      proveedores: [...proveedores].sort((a, b) => a.localeCompare(b, 'es'))
+    };
+    pintarOpcionesFiltroCompras();
+  }
+
+  function pintarOpcionesFiltroCompras() {
+    const llenar = (id, textoTodos, valores) => {
+      const sel = document.getElementById(id);
+      const actual = sel.value;
+      sel.innerHTML = `<option value="">${textoTodos}</option>` + valores.map(v => `<option value="${escAttr(v)}">${esc(v)}</option>`).join('');
+      sel.value = actual;
+    };
+    llenar('compras-filtro-empresa', 'Todas las empresas', COMPRAS_OPCIONES.empresas);
+    llenar('compras-filtro-proveedor', 'Todos los proveedores', COMPRAS_OPCIONES.proveedores);
+  }
+
+  function formatoCosto(v) {
+    if (v === null || v === undefined || v === '') return '—';
+    return '$' + Number(v).toLocaleString('es-CO', { maximumFractionDigits: 2 });
+  }
+
+  function formatoFechaCompra(v) {
+    return v ? new Date(v + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  }
+
+  async function cargarCompras() {
+    const empresa = document.getElementById('compras-filtro-empresa').value;
+    const proveedor = document.getElementById('compras-filtro-proveedor').value;
+    const desde = document.getElementById('compras-filtro-desde').value;
+    const hasta = document.getElementById('compras-filtro-hasta').value;
+    const texto = document.getElementById('compras-filtro-texto').value.trim();
+    const solicitud = ++comprasSolicitud;
+
+    const consultar = () => {
+      const inicio = comprasPagina * COMPRAS_POR_PAGINA;
+      let q = sb.from('detalle_compras').select('*', { count: 'exact' })
+        .order('fecha', { ascending: false })
+        .order('id', { ascending: false });
+      if (empresa) q = q.eq('empresa', empresa);
+      if (proveedor) q = q.eq('proveedor', proveedor);
+      if (desde) q = q.gte('fecha', desde);
+      if (hasta) q = q.lte('fecha', hasta);
+      if (texto) q = q.ilike('producto', `%${texto}%`);
+      return q.range(inicio, inicio + COMPRAS_POR_PAGINA - 1);
+    };
+
+    let { data, error, count } = await consultar();
+    if (error && comprasPagina > 0) {
+      // La página pedida quedó fuera de rango (ej. se borraron registros): volver a la primera.
+      comprasPagina = 0;
+      ({ data, error, count } = await consultar());
+    }
+    if (solicitud !== comprasSolicitud) return; // llegó una respuesta más nueva, ignorar esta
+    if (error) { toast('Error cargando compras: ' + error.message, true); return; }
+    COMPRAS = data || [];
+    comprasTotal = count ?? COMPRAS.length;
+    renderCompras();
+  }
+
+  function renderCompras() {
+    const tbody = document.getElementById('tbody-compras');
+    tbody.innerHTML = COMPRAS.length
+      ? COMPRAS.map(c => `
+        <tr>
+          <td>${formatoFechaCompra(c.fecha)}</td>
+          <td><a href="#/compras/${c.id}"><strong>${esc(c.producto || 'Sin nombre')}</strong></a></td>
+          <td>${esc(c.proveedor || '—')}</td>
+          <td>${formatoCosto(c.costo_unitario)}</td>
+          <td>${esc(c.unidad || '—')}</td>
+          <td>${esc(c.empresa || '—')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="empty">No hay compras para estos filtros.</td></tr>';
+
+    const totalPaginas = Math.max(1, Math.ceil(comprasTotal / COMPRAS_POR_PAGINA));
+    document.getElementById('compras-paginacion-info').textContent = comprasTotal
+      ? `Página ${comprasPagina + 1} de ${totalPaginas} · ${comprasTotal.toLocaleString('es-CO')} registro(s)`
+      : '0 registros';
+    document.getElementById('btn-compras-anterior').disabled = comprasPagina <= 0;
+    document.getElementById('btn-compras-siguiente').disabled = comprasPagina + 1 >= totalPaginas;
+  }
+
+  function aplicarFiltrosCompras() {
+    comprasPagina = 0;
+    cargarCompras();
+  }
+
+  ['compras-filtro-empresa', 'compras-filtro-proveedor', 'compras-filtro-desde', 'compras-filtro-hasta'].forEach(id => {
+    document.getElementById(id).addEventListener('change', aplicarFiltrosCompras);
+  });
+  let comprasTemporizadorBusqueda = null;
+  document.getElementById('compras-filtro-texto').addEventListener('input', () => {
+    clearTimeout(comprasTemporizadorBusqueda);
+    comprasTemporizadorBusqueda = setTimeout(aplicarFiltrosCompras, 300);
+  });
+  document.getElementById('btn-compras-limpiar').addEventListener('click', () => {
+    ['compras-filtro-empresa', 'compras-filtro-proveedor', 'compras-filtro-desde', 'compras-filtro-hasta', 'compras-filtro-texto']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    aplicarFiltrosCompras();
+  });
+  document.getElementById('btn-compras-anterior').addEventListener('click', () => {
+    if (comprasPagina > 0) { comprasPagina--; cargarCompras(); }
+  });
+  document.getElementById('btn-compras-siguiente').addEventListener('click', () => {
+    comprasPagina++;
+    cargarCompras();
+  });
+
+  function mostrarListaCompras() {
+    document.getElementById('compras-vista-detalle').style.display = 'none';
+    document.getElementById('compras-vista-lista').style.display = 'block';
+    cargarCompras();
+  }
+
+  // Vista de DETALLE
+  async function mostrarDetalleCompra(id) {
+    document.getElementById('compras-vista-lista').style.display = 'none';
+    const cont = document.getElementById('compras-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
+
+    let c = COMPRAS.find(x => x.id === id);
+    if (!c) {
+      const { data, error } = await sb.from('detalle_compras').select('*').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Esta compra no existe o fue eliminada.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'compras', titulo: 'Compra no encontrada' });
+        return;
+      }
+      c = data;
+    }
+
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'compras', titulo: c.producto || 'Compra sin producto', subtitulo: `Compra #${c.id}${c.empresa ? ' — ' + c.empresa : ''}` });
+
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    const campoSimple = (etiqueta, campoDb, { tipo = 'text', numerico = false, formato = null, despues = null } = {}) => campoEditable(camposWrap, {
+      etiqueta,
+      valor: c[campoDb],
+      tipo,
+      formatoVista: formato,
+      onGuardar: async (nuevo) => {
+        let valor;
+        if (numerico) {
+          valor = nuevo === '' ? null : Number(nuevo);
+          if (valor !== null && Number.isNaN(valor)) { toast('Escribe un número válido', true); return false; }
+        } else if (tipo === 'date') {
+          valor = nuevo || null;
+        } else {
+          valor = nuevo.trim() || null;
+        }
+        const { error } = await sb.from('detalle_compras').update({ [campoDb]: valor }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c[campoDb] = valor;
+        toast('Compra actualizada');
+        if (despues) despues();
+        return true;
+      }
+    });
+
+    const valorOVacio = (v) => (v === null || v === undefined || v === '');
+
+    campoSimple('Empresa', 'empresa', { despues: cargarOpcionesCompras });
+    campoSimple('Fecha', 'fecha', { tipo: 'date', formato: (v) => formatoFechaCompra(v) });
+    campoSimple('Proveedor', 'proveedor', { despues: cargarOpcionesCompras });
+    campoSimple('Producto', 'producto', { despues: () => { cont.querySelector('.panel-head h2').textContent = c.producto || 'Compra sin producto'; } });
+    campoSimple('Número de factura', 'numero_factura');
+    campoSimple('Total de la factura', 'total_factura', { tipo: 'number', numerico: true, formato: (v) => formatoCosto(v) });
+    campoSimple('Cantidad', 'cantidad', { tipo: 'number', numerico: true, formato: (v) => valorOVacio(v) ? '—' : esc(String(v)) });
+    campoSimple('Unidad', 'unidad');
+    campoSimple('Costo unitario', 'costo_unitario', { tipo: 'number', numerico: true, formato: (v) => formatoCosto(v) });
+
+    const opcionesIngrediente = [{ value: '', label: '— Sin ingrediente —' }, ...INGREDIENTES.map(i => ({ value: i.id, label: i.nombre }))];
+    if (c.ingrediente_id != null && !INGREDIENTES.some(i => String(i.id) === String(c.ingrediente_id))) {
+      opcionesIngrediente.push({ value: c.ingrediente_id, label: `Ingrediente #${c.ingrediente_id} (no encontrado)` });
+    }
+    campoEditable(camposWrap, {
+      etiqueta: 'Ingrediente',
+      valor: c.ingrediente_id ?? '',
+      opcionesSelect: opcionesIngrediente,
+      formatoVista: (v) => esc(valorOVacio(v) ? '— sin ingrediente —' : (opcionesIngrediente.find(o => String(o.value) === String(v))?.label || `Ingrediente #${v}`)),
+      onGuardar: async (nuevo) => {
+        const ingredienteId = nuevo === '' ? null : Number(nuevo);
+        const { error } = await sb.from('detalle_compras').update({ ingrediente_id: ingredienteId }).eq('id', c.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        c.ingrediente_id = ingredienteId;
+        toast('Compra actualizada');
+        return true;
+      }
+    });
+
+    // Campos internos del sistema: solo lectura
+    campoTexto(camposWrap, { etiqueta: 'Costo normalizado', texto: formatoCosto(c.costo_normalizado) });
+    campoTexto(camposWrap, { etiqueta: 'Archivo en Drive (ID)', texto: c.drive_file_id || '—' });
+    campoTexto(camposWrap, { etiqueta: 'Creado', texto: c.creado_en ? new Date(c.creado_en).toLocaleString('es-CO') : '—' });
+    if ('intento_clasificacion_en' in c) {
+      campoTexto(camposWrap, { etiqueta: 'Último intento de clasificación', texto: c.intento_clasificacion_en ? new Date(c.intento_clasificacion_en).toLocaleString('es-CO') : '—' });
+    }
+  }
+
+  registrarSeccion('compras', { titulo: 'Detalle de Compras', mostrarLista: mostrarListaCompras, mostrarDetalle: mostrarDetalleCompra });
+
+  // ---------- RECETAS ----------
+  async function cargarRecetas() {
+    const { data, error } = await sb.from('recetas').select('*').order('nombre');
+    if (error) { toast('Error cargando recetas: ' + error.message, true); return; }
+    RECETAS = data || [];
+    renderRecetas();
+  }
+
+  function formatoFechaHora(v) {
+    return v ? new Date(v).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+  }
+
+  // Vista de LISTA
+  function renderRecetas() {
+    const tbody = document.getElementById('tbody-recetas');
+    if (!RECETAS.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Aún no hay recetas. Crea la primera arriba.</td></tr>'; return; }
+    tbody.innerHTML = RECETAS.map(r => `
+      <tr>
+        <td><a href="#/recetas/${r.id}"><strong>${esc(r.nombre || 'Sin nombre')}</strong></a></td>
+        <td>${formatoCosto(r.costo_calculado)}</td>
+        <td>${formatoFechaHora(r.costo_calculado_en)}</td>
+      </tr>`).join('');
+  }
+
+  function mostrarListaRecetas() {
+    document.getElementById('recetas-vista-detalle').style.display = 'none';
+    document.getElementById('recetas-vista-lista').style.display = 'block';
+    renderRecetas();
+  }
+
+  function mostrarFormularioReceta(visible) {
+    document.getElementById('nr-form-wrap').style.display = visible ? '' : 'none';
+    document.getElementById('btn-nueva-receta').style.display = visible ? 'none' : '';
+  }
+  document.getElementById('btn-nueva-receta').addEventListener('click', () => mostrarFormularioReceta(true));
+  document.getElementById('btn-cancelar-receta').addEventListener('click', () => mostrarFormularioReceta(false));
+
+  document.getElementById('btn-crear-receta').addEventListener('click', async () => {
+    const nombre = document.getElementById('nr-nombre').value.trim();
+    const numeroOpcional = (id) => {
+      const v = document.getElementById(id).value;
+      return v === '' ? null : Number(v);
+    };
+    if (!nombre) { toast('Ponle un nombre a la receta', true); return; }
+    const { data, error } = await sb.from('recetas').insert({
+      nombre,
+      rendimiento_porciones: numeroOpcional('nr-porciones'),
+      rendimiento_cantidad: numeroOpcional('nr-cantidad'),
+      rendimiento_unidad: document.getElementById('nr-unidad').value.trim() || null,
+      notas: document.getElementById('nr-notas').value.trim() || null
+    }).select().single();
+    if (error) { toast('Error: ' + error.message, true); return; }
+    ['nr-nombre', 'nr-porciones', 'nr-cantidad', 'nr-unidad', 'nr-notas'].forEach(id => { document.getElementById(id).value = ''; });
+    mostrarFormularioReceta(false);
+    toast('Receta creada');
+    await cargarRecetas();
+    location.hash = '/recetas/' + data.id; // abre la ficha para agregar los componentes
+  });
+
+  // Recetas que (directa o indirectamente) usan a "recetaId" como sub-receta: no se pueden ofrecer
+  // como componente de ella, porque cerrarían un ciclo. Incluye a la propia receta.
+  function recetasQueDependenDe(recetaId, enlaces) {
+    const excluidas = new Set([recetaId]);
+    let cambio = true;
+    while (cambio) {
+      cambio = false;
+      enlaces.forEach(e => {
+        if (excluidas.has(e.subreceta_id) && !excluidas.has(e.receta_id)) {
+          excluidas.add(e.receta_id);
+          cambio = true;
+        }
+      });
+    }
+    return excluidas;
+  }
+
+  const formatoCantidad = (v) => (v === null || v === undefined || v === '') ? '—' : Number(v).toLocaleString('es-CO', { maximumFractionDigits: 4 });
+
+  // Vista de DETALLE
+  async function mostrarDetalleReceta(id) {
+    document.getElementById('recetas-vista-lista').style.display = 'none';
+    const cont = document.getElementById('recetas-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
+
+    let r = RECETAS.find(x => x.id === id);
+    if (!r) {
+      const { data, error } = await sb.from('recetas').select('*').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Esta receta no existe o fue eliminada.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'recetas', titulo: 'Receta no encontrada' });
+        return;
+      }
+      r = data;
+    }
+
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'recetas', titulo: r.nombre || 'Receta sin nombre', subtitulo: 'Ficha de receta' });
+
+    // ---- Campos propios ----
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    const campoReceta = (etiqueta, campoDb, { tipo = 'text', numerico = false, formato = null, despues = null } = {}) => campoEditable(camposWrap, {
+      etiqueta,
+      valor: r[campoDb],
+      tipo,
+      formatoVista: formato,
+      onGuardar: async (nuevo) => {
+        let valor;
+        if (numerico) {
+          valor = nuevo === '' ? null : Number(nuevo);
+          if (valor !== null && Number.isNaN(valor)) { toast('Escribe un número válido', true); return false; }
+        } else {
+          valor = nuevo.trim() || null;
+        }
+        if (campoDb === 'nombre' && !valor) { toast('El nombre no puede quedar vacío', true); return false; }
+        const { error } = await sb.from('recetas').update({ [campoDb]: valor }).eq('id', r.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        r[campoDb] = valor;
+        toast('Receta actualizada');
+        if (despues) despues();
+        return true;
+      }
+    });
+    campoReceta('Nombre', 'nombre', { despues: () => { cont.querySelector('.panel-head h2').textContent = r.nombre; } });
+    campoReceta('Rendimiento (porciones)', 'rendimiento_porciones', { tipo: 'number', numerico: true, formato: (v) => formatoCantidad(v) });
+    campoReceta('Rendimiento (cantidad)', 'rendimiento_cantidad', { tipo: 'number', numerico: true, formato: (v) => formatoCantidad(v) });
+    campoReceta('Rendimiento (unidad)', 'rendimiento_unidad');
+    campoReceta('Notas', 'notas', { tipo: 'textarea' });
+
+    const tituloSeccion = (texto) => {
+      const h = document.createElement('h3');
+      h.style.cssText = 'font-size:14px; font-family:inherit; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin:0 0 10px;';
+      h.textContent = texto;
+      return h;
+    };
+    const tarjeta = () => {
+      const d = document.createElement('div');
+      d.style.cssText = 'background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); padding:18px 20px; margin-bottom:24px;';
+      return d;
+    };
+
+    // ---- Componentes (editable) ----
+    const seccionComp = document.createElement('div');
+    seccionComp.appendChild(tituloSeccion('Componentes'));
+    const tarjetaComp = tarjeta();
+    seccionComp.appendChild(tarjetaComp);
+    cont.appendChild(seccionComp);
+
+    // ---- Recalcular costo ----
+    const tarjetaCosto = tarjeta();
+    tarjetaCosto.style.cssText += 'display:flex; align-items:center; gap:20px; flex-wrap:wrap;';
+    tarjetaCosto.innerHTML = `
+      <button class="primary" id="btn-recalcular-costo" style="font-size:16px; padding:14px 28px;">Recalcular costo</button>
+      <div>
+        <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave);">Costo guardado</div>
+        <div id="receta-costo-guardado" style="font-size:24px; font-weight:800; color:var(--costra-2);"></div>
+        <div id="receta-costo-fecha" style="font-size:12px; color:var(--texto-suave);"></div>
+      </div>
+      <div style="font-size:12px; color:var(--texto-suave); max-width:320px;">El costo guardado solo cambia cuando presionas este botón. Abajo ves el costo en vivo, sin guardar.</div>`;
+    cont.appendChild(tarjetaCosto);
+
+    // ---- Desglose en vivo ----
+    const seccionDesglose = document.createElement('div');
+    seccionDesglose.appendChild(tituloSeccion('Desglose de costeo (en vivo, sin guardar)'));
+    const tarjetaDesglose = tarjeta();
+    seccionDesglose.appendChild(tarjetaDesglose);
+    cont.appendChild(seccionDesglose);
+
+    function pintarCostoGuardado() {
+      const tieneCosto = r.costo_calculado !== null && r.costo_calculado !== undefined;
+      document.getElementById('receta-costo-guardado').textContent = tieneCosto ? formatoCosto(r.costo_calculado) : '—';
+      document.getElementById('receta-costo-fecha').textContent = r.costo_calculado_en
+        ? `Último cálculo: ${formatoFechaHora(r.costo_calculado_en)}`
+        : 'Nunca se ha calculado';
+    }
+    pintarCostoGuardado();
+
+    async function pintarDesglose() {
+      tarjetaDesglose.innerHTML = '<p class="empty" style="padding:12px 0;">Cargando…</p>';
+      const [{ data: detalle, error: errDet }, { data: total, error: errTot }] = await Promise.all([
+        sb.from('costo_receta_detalle').select('*').eq('receta_id', r.id).order('costo_total_ingrediente', { ascending: false, nullsFirst: false }),
+        sb.from('costo_receta_total').select('costo_total').eq('receta_id', r.id).maybeSingle()
+      ]);
+      if (errDet || errTot) {
+        tarjetaDesglose.innerHTML = `<p class="empty" style="padding:12px 0;">No se pudo cargar el desglose: ${esc((errDet || errTot).message)}</p>`;
+        return;
+      }
+      const filas = detalle || [];
+      const totalVivo = total && total.costo_total !== null && total.costo_total !== undefined ? formatoCosto(total.costo_total) : '—';
+      tarjetaDesglose.innerHTML = `
+        <div style="margin-bottom:10px; font-size:14px;">Costo total en vivo: <strong style="color:var(--costra-2);">${totalVivo}</strong></div>
+        ${filas.length ? `
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Ingrediente</th><th>Cantidad</th><th>Unidad</th><th>Costo unitario</th><th>Costo del componente</th></tr></thead>
+            <tbody>
+              ${filas.map(f => `
+                <tr>
+                  <td>${esc(f.ingrediente_nombre || INGREDIENTES.find(i => i.id === f.ingrediente_id)?.nombre || '—')}</td>
+                  <td>${formatoCantidad(f.cantidad)}</td>
+                  <td>${esc(f.unidad || '—')}</td>
+                  <td>${formatoCosto(f.costo_unitario)}</td>
+                  <td><strong>${formatoCosto(f.costo_total_ingrediente)}</strong></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : '<p class="empty" style="padding:12px 0;">Esta receta aún no tiene componentes con costo calculable.</p>'}`;
+    }
+
+    // Una escritura que RLS bloquea no da error, solo devuelve cero filas: se verifica para no avisar un éxito falso.
+    const escrituraAplicada = (data, error, mensajeError) => {
+      if (error) { toast(mensajeError + error.message, true); return false; }
+      if (!data || !data.length) { toast(mensajeError + 'no se aplicó el cambio (revisa los permisos)', true); return false; }
+      return true;
+    };
+
+    async function pintarComponentes() {
+      tarjetaComp.innerHTML = '<p class="empty" style="padding:12px 0;">Cargando…</p>';
+      const [{ data: comps, error: errComps }, { data: enlaces, error: errEnlaces }] = await Promise.all([
+        sb.from('receta_componentes').select('*').eq('receta_id', r.id).order('id'),
+        sb.from('receta_componentes').select('receta_id, subreceta_id').eq('tipo_componente', 'receta')
+      ]);
+      if (errComps || errEnlaces) {
+        tarjetaComp.innerHTML = `<p class="empty" style="padding:12px 0;">No se pudieron cargar los componentes: ${esc((errComps || errEnlaces).message)}</p>`;
+        return;
+      }
+      const excluidas = recetasQueDependenDe(r.id, enlaces || []);
+
+      const opcionesDe = (tipo, actualId) => {
+        const base = tipo === 'receta'
+          ? RECETAS.filter(x => !excluidas.has(x.id)).map(x => ({ value: x.id, label: x.nombre }))
+          : INGREDIENTES.map(i => ({ value: i.id, label: i.nombre }));
+        const opciones = [{ value: '', label: '— Elige —' }, ...base];
+        if (actualId !== null && actualId !== undefined && !base.some(o => String(o.value) === String(actualId))) {
+          opciones.push({ value: actualId, label: `${tipo === 'receta' ? 'Receta' : 'Ingrediente'} #${actualId} (no disponible)` });
+        }
+        return opciones;
+      };
+      const htmlOpciones = (opciones, seleccionado) => opciones
+        .map(o => `<option value="${escAttr(String(o.value))}" ${String(o.value) === String(seleccionado ?? '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
+
+      // comp = componente existente, o null para la fila de "agregar"
+      const crearFila = (comp) => {
+        const tr = document.createElement('tr');
+        const tipoInicial = comp ? comp.tipo_componente : 'ingrediente';
+        const compIdInicial = comp ? (tipoInicial === 'receta' ? comp.subreceta_id : comp.ingrediente_id) : '';
+        tr.innerHTML = `
+          <td><select class="mini" data-f="tipo" style="min-width:130px;">
+            <option value="ingrediente" ${tipoInicial === 'ingrediente' ? 'selected' : ''}>Ingrediente</option>
+            <option value="receta" ${tipoInicial === 'receta' ? 'selected' : ''}>Sub-receta</option>
+          </select></td>
+          <td><select class="mini" data-f="componente" style="min-width:200px;">${htmlOpciones(opcionesDe(tipoInicial, compIdInicial || null), compIdInicial)}</select></td>
+          <td><input type="number" step="any" class="mini" data-f="cantidad" style="width:110px;" value="${escAttr(comp && comp.cantidad !== null ? String(comp.cantidad) : '')}"></td>
+          <td><input type="text" class="mini" data-f="unidad" style="width:100px;" value="${escAttr(comp ? (comp.unidad || '') : '')}"></td>
+          <td style="white-space:nowrap;">${comp
+            ? '<button class="link" type="button" data-guardar>Guardar</button> &nbsp;·&nbsp; <button class="link" type="button" data-quitar>Quitar</button>'
+            : '<button class="ghost" type="button" data-agregar>+ Agregar componente</button>'}</td>`;
+
+        const selTipo = tr.querySelector('[data-f="tipo"]');
+        const selComp = tr.querySelector('[data-f="componente"]');
+        selTipo.addEventListener('change', () => { selComp.innerHTML = htmlOpciones(opcionesDe(selTipo.value, null), ''); });
+
+        const leerPayload = () => {
+          const compId = selComp.value;
+          const cantidadTxt = tr.querySelector('[data-f="cantidad"]').value;
+          if (compId === '') { toast('Elige el ingrediente o la sub-receta', true); return null; }
+          const cantidad = Number(cantidadTxt);
+          if (cantidadTxt === '' || Number.isNaN(cantidad) || cantidad <= 0) { toast('La cantidad debe ser un número mayor que 0', true); return null; }
+          const esReceta = selTipo.value === 'receta';
+          return {
+            receta_id: r.id,
+            tipo_componente: selTipo.value,
+            ingrediente_id: esReceta ? null : Number(compId),
+            subreceta_id: esReceta ? Number(compId) : null,
+            cantidad,
+            unidad: tr.querySelector('[data-f="unidad"]').value.trim() || null
+          };
+        };
+        const refrescar = async () => { await pintarComponentes(); pintarDesglose(); };
+
+        if (comp) {
+          tr.querySelector('[data-guardar]').addEventListener('click', async () => {
+            const payload = leerPayload();
+            if (!payload) return;
+            const { data, error } = await sb.from('receta_componentes').update(payload).eq('id', comp.id).select('id');
+            if (!escrituraAplicada(data, error, 'Error: ')) return;
+            toast('Componente actualizado');
+            refrescar();
+          });
+          tr.querySelector('[data-quitar]').addEventListener('click', async () => {
+            const { data, error } = await sb.from('receta_componentes').delete().eq('id', comp.id).select('id');
+            if (!escrituraAplicada(data, error, 'Error: ')) return;
+            toast('Componente quitado');
+            refrescar();
+          });
+        } else {
+          tr.querySelector('[data-agregar]').addEventListener('click', async () => {
+            const payload = leerPayload();
+            if (!payload) return;
+            const { data, error } = await sb.from('receta_componentes').insert(payload).select('id');
+            if (!escrituraAplicada(data, error, 'Error: ')) return;
+            toast('Componente agregado');
+            refrescar();
+          });
+        }
+        return tr;
+      };
+
+      const lista = comps || [];
+      tarjetaComp.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Tipo</th><th>Componente</th><th>Cantidad</th><th>Unidad</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        ${lista.length ? '' : '<p style="font-size:13px; color:var(--texto-suave); margin:10px 0 0;">Esta receta aún no tiene componentes. Agrega el primero abajo.</p>'}`;
+      const tbody = tarjetaComp.querySelector('tbody');
+      lista.forEach(c => tbody.appendChild(crearFila(c)));
+      const filaNueva = crearFila(null);
+      filaNueva.style.background = 'var(--masa)';
+      tbody.appendChild(filaNueva);
+    }
+
+    document.getElementById('btn-recalcular-costo').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Recalculando…';
+      try {
+        const { data: total, error: errTotal } = await sb.from('costo_receta_total').select('costo_total').eq('receta_id', r.id).maybeSingle();
+        if (errTotal) { toast('Error consultando el costo: ' + errTotal.message, true); return; }
+        if (!total || total.costo_total === null || total.costo_total === undefined) {
+          toast('No hay un costo que guardar: la receta no tiene componentes con costo calculable', true);
+          return;
+        }
+        const ahora = new Date().toISOString();
+        const { data: actualizado, error: errUpd } = await sb.from('recetas')
+          .update({ costo_calculado: total.costo_total, costo_calculado_en: ahora })
+          .eq('id', r.id).select('id');
+        if (!escrituraAplicada(actualizado, errUpd, 'No se pudo guardar el costo: ')) return;
+        r.costo_calculado = total.costo_total;
+        r.costo_calculado_en = ahora;
+        pintarCostoGuardado();
+        toast('Costo recalculado y guardado');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Recalcular costo';
+      }
+    });
+
+    await pintarComponentes();
+    pintarDesglose();
+  }
+
+  registrarSeccion('recetas', { titulo: 'Recetas', mostrarLista: mostrarListaRecetas, mostrarDetalle: mostrarDetalleReceta });
+
+  // ---------- INGREDIENTES ----------
+  // Id de un ingrediente recién creado: su ficha lanza la búsqueda de compras existentes apenas se abre.
+  let ingredienteAClasificarAlAbrir = null;
+
+  // Vista de LISTA (INGREDIENTES se carga en cargarIngredientes)
+  function renderIngredientes() {
+    const tbody = document.getElementById('tbody-ingredientes');
+    if (!INGREDIENTES.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Aún no hay ingredientes. Agrega el primero arriba.</td></tr>'; return; }
+    tbody.innerHTML = INGREDIENTES.map(i => `
+      <tr>
+        <td><a href="#/ingredientes/${i.id}"><strong>${esc(i.nombre || 'Sin nombre')}</strong></a></td>
+        <td>${esc(i.unidad_estandar || '—')}</td>
+        <td><span class="pill ${i.activo === false ? 'off' : 'on'}">${i.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      </tr>`).join('');
+  }
+
+  function mostrarListaIngredientes() {
+    document.getElementById('ingredientes-vista-detalle').style.display = 'none';
+    document.getElementById('ingredientes-vista-lista').style.display = 'block';
+    renderIngredientes();
+  }
+
+  function mostrarFormularioIngrediente(visible) {
+    document.getElementById('ni-form-wrap').style.display = visible ? '' : 'none';
+    document.getElementById('btn-nuevo-ingrediente').style.display = visible ? 'none' : '';
+  }
+  document.getElementById('btn-nuevo-ingrediente').addEventListener('click', () => mostrarFormularioIngrediente(true));
+  document.getElementById('btn-cancelar-ingrediente').addEventListener('click', () => mostrarFormularioIngrediente(false));
+
+  document.getElementById('btn-crear-ingrediente').addEventListener('click', async () => {
+    const nombre = document.getElementById('ni-nombre').value.trim();
+    const unidad = document.getElementById('ni-unidad').value.trim();
+    if (!nombre || !unidad) { toast('Escribe el nombre y la unidad estándar', true); return; }
+    const { data, error } = await sb.from('ingredientes').insert({ nombre, unidad_estandar: unidad, activo: true }).select().single();
+    if (error) { toast('Error: ' + error.message, true); return; }
+    document.getElementById('ni-nombre').value = '';
+    document.getElementById('ni-unidad').value = '';
+    mostrarFormularioIngrediente(false);
+    toast('Ingrediente creado');
+    await cargarIngredientes();
+    ingredienteAClasificarAlAbrir = data.id; // la ficha buscará compras existentes con este nombre
+    location.hash = '/ingredientes/' + data.id;
+  });
+
+  // Vista de DETALLE
+  async function mostrarDetalleIngrediente(id) {
+    document.getElementById('ingredientes-vista-lista').style.display = 'none';
+    const cont = document.getElementById('ingredientes-vista-detalle');
+    cont.style.display = 'block';
+    cont.innerHTML = '<p class="empty">Cargando…</p>';
+
+    let ing = INGREDIENTES.find(x => x.id === id);
+    if (!ing) {
+      const { data, error } = await sb.from('ingredientes').select('id, nombre, unidad_estandar, activo').eq('id', id).maybeSingle();
+      if (error || !data) {
+        cont.innerHTML = '<p class="empty">Este ingrediente no existe o fue eliminado.</p>';
+        pintarEncabezadoDetalle(cont, { tab: 'ingredientes', titulo: 'Ingrediente no encontrado' });
+        return;
+      }
+      ing = data;
+    }
+
+    cont.innerHTML = '';
+    pintarEncabezadoDetalle(cont, { tab: 'ingredientes', titulo: ing.nombre || 'Ingrediente sin nombre', subtitulo: 'Ficha de ingrediente' });
+
+    // ---- Costo actual (destacado) ----
+    const tarjetaCosto = document.createElement('div');
+    tarjetaCosto.style.cssText = 'background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); padding:24px 26px; margin-bottom:20px;';
+    cont.appendChild(tarjetaCosto);
+
+    const indicador = document.createElement('div');
+    indicador.style.cssText = 'display:none; margin-bottom:20px; padding:10px 14px; background:#FBE8C6; border:1px solid #E3B769; border-radius:var(--radius-sm); font-size:13px; color:#8A5A12;';
+    indicador.textContent = 'Buscando compras existentes…';
+    cont.appendChild(indicador);
+
+    async function pintarCostoActual() {
+      const { data, error } = await sb.from('costo_actual_ingredientes').select('*').eq('ingrediente_id', ing.id).limit(1);
+      const etiqueta = '<div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--texto-suave); margin-bottom:6px;">Costo actual</div>';
+      if (error) {
+        tarjetaCosto.innerHTML = `${etiqueta}<div style="font-size:14px; color:var(--error);">No se pudo cargar el costo: ${esc(error.message)}</div>`;
+        return;
+      }
+      const c = data && data[0];
+      if (!c) {
+        tarjetaCosto.innerHTML = `${etiqueta}<div style="font-size:18px; color:var(--texto-suave);">Sin compras registradas todavía</div>`;
+        return;
+      }
+      tarjetaCosto.innerHTML = `
+        ${etiqueta}
+        <div style="font-size:40px; font-weight:800; line-height:1.1; color:var(--costra-2);">${formatoCosto(c.costo_unitario)}${ing.unidad_estandar ? `<span style="font-size:16px; font-weight:600; color:var(--texto-suave);"> / ${esc(ing.unidad_estandar)}</span>` : ''}</div>
+        <div style="margin-top:10px; font-size:13px; color:var(--texto-suave);">
+          Compra más reciente: ${formatoFechaCompra(c.fecha)} · Proveedor: ${esc(c.proveedor || '—')}
+          ${c.detalle_compra_id ? ` · <a href="#/compras/${c.detalle_compra_id}">Ver compra</a>` : ''}
+        </div>`;
+    }
+
+    // ---- Campos editables ----
+    const camposWrap = document.createElement('div');
+    camposWrap.className = 'campos-detalle-grid';
+    cont.appendChild(camposWrap);
+
+    // Busca en las compras ya registradas las que correspondan a este ingrediente y las vincula (Edge Function).
+    async function ejecutarClasificacion() {
+      indicador.style.display = 'block';
+      try {
+        const { error } = await sb.functions.invoke('clasificar-ingredientes', { method: 'POST', body: { producto_like: ing.nombre } });
+        if (error) toast('No se pudo buscar compras existentes: ' + error.message, true);
+        else toast('Búsqueda de compras existentes completada');
+      } finally {
+        indicador.style.display = 'none';
+      }
+      await Promise.all([pintarCostoActual(), pintarHistorial()]);
+    }
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Nombre',
+      valor: ing.nombre,
+      onGuardar: async (nuevo) => {
+        const nombre = nuevo.trim();
+        if (!nombre) { toast('El nombre no puede quedar vacío', true); return false; }
+        const { error } = await sb.from('ingredientes').update({ nombre }).eq('id', ing.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        ing.nombre = nombre;
+        cont.querySelector('.panel-head h2').textContent = nombre;
+        toast('Ingrediente actualizado');
+        renderIngredientes();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Unidad estándar',
+      valor: ing.unidad_estandar,
+      onGuardar: async (nuevo) => {
+        const unidad = nuevo.trim();
+        if (!unidad) { toast('La unidad no puede quedar vacía', true); return false; }
+        const { error } = await sb.from('ingredientes').update({ unidad_estandar: unidad }).eq('id', ing.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        ing.unidad_estandar = unidad;
+        toast('Ingrediente actualizado');
+        renderIngredientes();
+        pintarCostoActual();
+        return true;
+      }
+    });
+
+    campoEditable(camposWrap, {
+      etiqueta: 'Estado',
+      valor: ing.activo === false ? 'false' : 'true',
+      opcionesSelect: [{ value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }],
+      formatoVista: (v) => `<span class="pill ${v === 'false' ? 'off' : 'on'}">${v === 'false' ? 'Inactivo' : 'Activo'}</span>`,
+      onGuardar: async (nuevo) => {
+        const activo = nuevo === 'true';
+        const reactivado = ing.activo === false && activo;
+        const { error } = await sb.from('ingredientes').update({ activo }).eq('id', ing.id);
+        if (error) { toast('Error: ' + error.message, true); return false; }
+        ing.activo = activo;
+        toast('Ingrediente actualizado');
+        renderIngredientes();
+        if (reactivado) ejecutarClasificacion(); // sin await: el campo vuelve a su vista mientras corre la búsqueda
+        return true;
+      }
+    });
+
+    // ---- Historial de compras (relacionada) ----
+    const historialWrap = document.createElement('div');
+    historialWrap.style.marginTop = '8px';
+    cont.appendChild(historialWrap);
+
+    async function pintarHistorial() {
+      const estabaAbierto = historialWrap.querySelector('.lista-relacionada-body')?.style.display === 'block';
+      const { data, error } = await sb.from('detalle_compras')
+        .select('id, fecha, proveedor, costo_unitario, numero_factura')
+        .eq('ingrediente_id', ing.id)
+        .order('fecha', { ascending: false })
+        .order('id', { ascending: false });
+      if (error) toast('Error cargando el historial de compras: ' + error.message, true);
+      historialWrap.innerHTML = '';
+      const wrap = listaRelacionada(historialWrap, {
+        titulo: 'Historial de Compras',
+        registros: data || [],
+        columnas: [
+          { titulo: 'Fecha', render: (c) => formatoFechaCompra(c.fecha) },
+          { titulo: 'Proveedor', render: (c) => esc(c.proveedor || '—') },
+          { titulo: 'Costo unitario', render: (c) => formatoCosto(c.costo_unitario) },
+          { titulo: 'Número de factura', render: (c) => `<a href="#/compras/${c.id}">${esc(c.numero_factura || 'Ver compra')}</a>` }
+        ],
+        filaVacia: 'Este ingrediente aún no tiene compras vinculadas.'
+      });
+      if (estabaAbierto) wrap.querySelector('.lista-relacionada-toggle').click();
+    }
+
+    await Promise.all([pintarCostoActual(), pintarHistorial()]);
+
+    if (ingredienteAClasificarAlAbrir === ing.id) {
+      ingredienteAClasificarAlAbrir = null;
+      ejecutarClasificacion();
+    }
+  }
+
+  registrarSeccion('ingredientes', { titulo: 'Ingredientes', mostrarLista: mostrarListaIngredientes, mostrarDetalle: mostrarDetalleIngrediente });
+
+  // ---------- NOTIFICACIONES (campanita del header) ----------
+  // Las notificaciones las genera el sistema (ej. cambios de precio); aquí solo se leen y se marcan como leídas.
+  let NOTIFICACIONES = [];
+  let notifNoLeidas = 0;
+  let notifTimer = null;
+  const NOTIF_MAX_LISTA = 50;
+  const NOTIF_CADA_MS = 60000;
+  const formatoRelativo = new Intl.RelativeTimeFormat('es', { numeric: 'always' });
+
+  function tiempoRelativo(iso) {
+    if (!iso) return '';
+    const segundos = Math.abs(Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+    if (segundos < 60) return 'hace unos segundos';
+    if (segundos < 3600) return formatoRelativo.format(-Math.floor(segundos / 60), 'minute');
+    if (segundos < 86400) return formatoRelativo.format(-Math.floor(segundos / 3600), 'hour');
+    if (segundos < 86400 * 30) return formatoRelativo.format(-Math.floor(segundos / 86400), 'day');
+    return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  // `avisarError` es true solo cuando el usuario abre el panel; el sondeo periódico falla en silencio.
+  async function cargarNotificaciones(avisarError = false) {
+    const [lista, conteo] = await Promise.all([
+      sb.from('notificaciones_crm').select('*').order('creado_en', { ascending: false }).order('id', { ascending: false }).limit(NOTIF_MAX_LISTA),
+      sb.from('notificaciones_crm').select('id', { count: 'exact', head: true }).eq('leida', false)
+    ]);
+    if (lista.error || conteo.error) {
+      if (avisarError) toast('Error cargando notificaciones: ' + (lista.error || conteo.error).message, true);
+      return;
+    }
+    NOTIFICACIONES = lista.data || [];
+    notifNoLeidas = conteo.count ?? NOTIFICACIONES.filter(n => !n.leida).length;
+    renderNotificaciones();
+  }
+
+  function renderNotificaciones() {
+    const badge = document.getElementById('notif-badge');
+    badge.textContent = notifNoLeidas > 99 ? '99+' : String(notifNoLeidas);
+    badge.style.display = notifNoLeidas > 0 ? '' : 'none';
+    document.getElementById('btn-notif').setAttribute('aria-label', notifNoLeidas > 0 ? `Notificaciones (${notifNoLeidas} sin leer)` : 'Notificaciones');
+    document.getElementById('btn-notif-todas').disabled = notifNoLeidas === 0;
+    document.getElementById('notif-lista').innerHTML = NOTIFICACIONES.length
+      ? NOTIFICACIONES.map(n => `
+        <button type="button" class="notif-item ${n.leida ? '' : 'no-leida'}" data-notif-id="${n.id}">
+          <span class="notif-mensaje">${esc(n.mensaje || 'Notificación')}</span>
+          <span class="notif-tiempo">${esc(tiempoRelativo(n.creado_en))}</span>
+        </button>`).join('')
+      : '<div class="notif-vacio">No tienes notificaciones.</div>';
+  }
+
+  // Una escritura que RLS bloquea no da error, solo cero filas: se verifica para no mostrar un éxito falso.
+  async function marcarNotificacionesLeidas(filtrarPorId) {
+    let q = sb.from('notificaciones_crm').update({ leida: true });
+    q = filtrarPorId !== undefined ? q.eq('id', filtrarPorId) : q.eq('leida', false);
+    const { data, error } = await q.select('id');
+    if (error) { toast('No se pudo marcar como leída: ' + error.message, true); return false; }
+    if (!data || !data.length) { toast('No se pudo marcar como leída (revisa los permisos)', true); return false; }
+    return true;
+  }
+
+  async function abrirNotificacion(id) {
+    const n = NOTIFICACIONES.find(x => x.id === id);
+    if (!n) return;
+    if (!n.leida && await marcarNotificacionesLeidas(id)) {
+      n.leida = true;
+      notifNoLeidas = Math.max(0, notifNoLeidas - 1);
+      renderNotificaciones();
+    }
+    cerrarPanelNotif();
+    if (n.ingrediente_id) location.hash = '/ingredientes/' + n.ingrediente_id;
+  }
+
+  const btnNotif = document.getElementById('btn-notif');
+  const panelNotif = document.getElementById('notif-panel');
+
+  function abrirPanelNotif() {
+    cerrarMenuNav();
+    panelNotif.style.display = 'block';
+    btnNotif.setAttribute('aria-expanded', 'true');
+    cargarNotificaciones(true);
+  }
+  function cerrarPanelNotif() {
+    panelNotif.style.display = 'none';
+    btnNotif.setAttribute('aria-expanded', 'false');
+  }
+  btnNotif.addEventListener('click', () => {
+    if (panelNotif.style.display !== 'none') cerrarPanelNotif(); else abrirPanelNotif();
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.notif-wrap')) cerrarPanelNotif();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrarPanelNotif();
+  });
+  document.getElementById('notif-lista').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-notif-id]');
+    if (item) abrirNotificacion(Number(item.dataset.notifId));
+  });
+  document.getElementById('btn-notif-todas').addEventListener('click', async () => {
+    if (!await marcarNotificacionesLeidas()) return;
+    NOTIFICACIONES.forEach(n => { n.leida = true; });
+    notifNoLeidas = 0;
+    renderNotificaciones();
+    toast('Todas las notificaciones quedaron como leídas');
+  });
+
+  // Las notificaciones las crea un proceso externo: se consultan al entrar y cada minuto mientras haya sesión.
+  function iniciarSondeoNotificaciones() {
+    clearInterval(notifTimer);
+    cargarNotificaciones();
+    notifTimer = setInterval(() => cargarNotificaciones(), NOTIF_CADA_MS);
+  }
+  function detenerSondeoNotificaciones() {
+    clearInterval(notifTimer);
+    notifTimer = null;
+    NOTIFICACIONES = [];
+    notifNoLeidas = 0;
+    renderNotificaciones();
+    cerrarPanelNotif();
+  }
+
+  // ============================================================
+  // REFRESCO MANUAL (botón de flechas circulares en cada sección)
+  // ============================================================
+  // Un solo componente para todas las secciones: `registrarRefresco(ruta, fn)` dice qué datos
+  // se vuelven a consultar; el resto (botón, ícono girando, conservar filtros, página y vista
+  // abierta, y volver a pintar la ficha si estás en un detalle) lo resuelve `refrescarSeccion`.
+  // El botón se inserta en el encabezado de la lista (insertarBotonesRefrescar) y en el de cada
+  // ficha de detalle (pintarEncabezadoDetalle → botonRefrescarHTML).
+  // Para agregarlo a una sección nueva basta con registrarla y llamar a registrarRefresco.
+
+  function registrarRefresco(ruta, fn) {
+    if (SECCIONES[ruta]) SECCIONES[ruta].refrescar = fn;
+  }
+
+  function botonRefrescarHTML(ruta) {
+    if (!SECCIONES[ruta] || !SECCIONES[ruta].refrescar) return '';
+    return `<button class="btn-refrescar" type="button" data-refrescar="${escAttr(ruta)}" title="Refrescar datos" aria-label="Refrescar datos">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+    </button>`;
+  }
+
+  function insertarBotonesRefrescar() {
+    Object.entries(SECCIONES).forEach(([ruta, sec]) => {
+      if (!sec.refrescar) return;
+      const encabezado = document.querySelector(`#panel-${sec.panelTab} .panel-head`);
+      if (encabezado) encabezado.insertAdjacentHTML('beforeend', botonRefrescarHTML(ruta));
+    });
+  }
+
+  // Volver a cargar los datos repuebla algunos <select> de formularios; se restauran para no perder lo que el usuario ya eligió.
+  const SELECTS_DE_FORMULARIOS = ['nk-cliente', 'en-cliente', 'np-cliente', 'lp-producto', 'en-producto', 'hist-producto'];
+  async function conservandoSelectsDeFormularios(fn) {
+    const previos = SELECTS_DE_FORMULARIOS.map(id => [id, document.getElementById(id)?.value]);
+    try {
+      await fn();
+    } finally {
+      previos.forEach(([id, valor]) => {
+        const el = document.getElementById(id);
+        if (el && valor) el.value = valor;
+      });
+    }
+  }
+
+  const seccionesRefrescando = new Set();
+  async function refrescarSeccion(ruta) {
+    const sec = SECCIONES[ruta];
+    if (!sec || !sec.refrescar || seccionesRefrescando.has(ruta)) return;
+    seccionesRefrescando.add(ruta);
+    const botones = () => document.querySelectorAll(`[data-refrescar="${ruta}"]`);
+    botones().forEach(b => { b.disabled = true; b.classList.add('refrescando'); });
+    const scrollY = window.scrollY;
+    try {
+      // La pausa mínima evita que un refresco muy rápido parezca que no hizo nada.
+      await Promise.all([conservandoSelectsDeFormularios(sec.refrescar), new Promise(r => setTimeout(r, 450))]);
+
+      // Si estás en la ficha de un registro, se vuelve a pintar con los datos nuevos, conservando qué listas relacionadas tenías abiertas.
+      const enDetalle = sec.mostrarDetalle && location.hash.match(new RegExp(`^#/${ruta}/(\\d+)$`));
+      if (enDetalle) {
+        const contenedor = document.getElementById(`${ruta}-vista-detalle`);
+        const abiertas = [...contenedor.querySelectorAll('.lista-relacionada')]
+          .filter(w => w.querySelector('.lista-relacionada-body').style.display === 'block')
+          .map(w => w.querySelector('.lista-relacionada-toggle').textContent.replace(/\s*\(\d+\).*$/, ''));
+        await sec.mostrarDetalle(Number(enDetalle[1]));
+        contenedor.querySelectorAll('.lista-relacionada').forEach(w => {
+          const titulo = w.querySelector('.lista-relacionada-toggle').textContent.replace(/\s*\(\d+\).*$/, '');
+          if (abiertas.includes(titulo)) w.querySelector('.lista-relacionada-toggle').click();
+        });
+      }
+    } catch (e) {
+      toast('No se pudo refrescar: ' + e.message, true);
+    } finally {
+      botones().forEach(b => { b.disabled = false; b.classList.remove('refrescando'); });
+      window.scrollTo(0, scrollY);
+      seccionesRefrescando.delete(ruta);
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const boton = e.target.closest('[data-refrescar]');
+    if (boton) refrescarSeccion(boton.dataset.refrescar);
+  });
+
+  // Qué se vuelve a consultar en cada sección (las funciones cargar* conservan filtros, rangos de fechas y página).
+  registrarRefresco('clientes', () => Promise.all([cargarClientes(), cargarContactos(), cargarClienteProducto(), cargarProductos()]));
+  registrarRefresco('contactos', () => Promise.all([cargarClientes(), cargarContactos()]));
+  registrarRefresco('productos', () => Promise.all([cargarFormulas(), cargarPresentaciones(), cargarProductos()]));
+  registrarRefresco('pedidos', async () => {
+    await Promise.all([cargarClientes(), cargarContactos(), cargarClienteProducto(), cargarProductos()]);
+    await cargarPedidos();
+  });
+  registrarRefresco('potenciales', () => cargarClientesPotenciales());
+  registrarRefresco('facturas', () => Promise.all([cargarTiposGasto(), cargarProveedores(), cargarFacturas()]));
+  registrarRefresco('compras', () => Promise.all([cargarIngredientes(), cargarOpcionesCompras(), cargarCompras()]));
+  registrarRefresco('ingredientes', () => cargarIngredientes());
+  registrarRefresco('recetas', () => Promise.all([cargarIngredientes(), cargarRecetas()]));
+  registrarRefresco('analisis', () => cargarAnalisis());
+  registrarRefresco('produccion', async () => {
+    await Promise.all([cargarClientes(), cargarProductos()]);
+    await cargarProduccion();
+  });
+  registrarRefresco('asistencia', () => cargarAsistencia());
+  insertarBotonesRefrescar();
 
   function esc(str) {
     const d = document.createElement('div');
