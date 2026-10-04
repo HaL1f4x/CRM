@@ -3726,7 +3726,7 @@
   // ---------- CONSULTAR FACTURAS (carpeta de Drive) ----------
   document.getElementById('btn-consultar-facturas').addEventListener('click', consultarFacturasDrive);
 
-  // La respuesta de leer-facturas-drive no tiene un contrato documentado en el CRM: solo
+  // La respuesta de Leer-facturas-drive no tiene un contrato documentado en el CRM: solo
   // `pendientes_para_proxima_corrida` es un nombre confirmado. Lo demás se busca bajo los nombres
   // más probables, y todo campo que no se reconozca se muestra tal cual, para no mostrar ceros
   // falsos si el nombre real es otro.
@@ -3820,7 +3820,7 @@
     box.style.cssText = 'display:block; margin-bottom:16px; padding:12px 16px; background:#FBE8C6; border:1px solid #E3B769; border-radius:var(--radius-sm); font-size:13px; color:#8A5A12;';
     box.innerHTML = '<span class="spinner-mini"></span>Revisando carpeta de Drive… (puede tardar hasta un minuto)';
     try {
-      const { data, error } = await sb.functions.invoke('leer-facturas-drive', { method: 'POST' });
+      const { data, error } = await sb.functions.invoke('Leer-facturas-drive', { method: 'POST' });
       if (error) {
         const motivo = await mensajeDeErrorFuncion(error);
         box.style.cssText = 'display:block; margin-bottom:16px; padding:12px 16px; background:white; border:1px solid var(--linea); border-left:4px solid var(--error); border-radius:var(--radius-sm); font-size:13px;';
