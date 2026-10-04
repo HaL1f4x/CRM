@@ -4267,6 +4267,25 @@
     return excluidas;
   }
 
+  // Unidad que hereda un componente de receta: unidad_estandar del ingrediente, o rendimiento_unidad de la sub-receta.
+  // La versión "cargada" usa los datos que ya están en memoria (para mostrarla al elegir);
+  // la consulta va a la base y se usa al guardar, para no guardar una unidad desactualizada.
+  function unidadHeredadaCargada(tipo, id) {
+    const fuente = tipo === 'receta'
+      ? RECETAS.find(x => String(x.id) === String(id))?.rendimiento_unidad
+      : INGREDIENTES.find(x => String(x.id) === String(id))?.unidad_estandar;
+    return (fuente && String(fuente).trim()) || null;
+  }
+
+  async function consultarUnidadHeredada(tipo, id) {
+    const { data, error } = tipo === 'receta'
+      ? await sb.from('recetas').select('rendimiento_unidad').eq('id', id).maybeSingle()
+      : await sb.from('ingredientes').select('unidad_estandar').eq('id', id).maybeSingle();
+    if (error) return { error };
+    const bruta = data ? (tipo === 'receta' ? data.rendimiento_unidad : data.unidad_estandar) : null;
+    return { unidad: (bruta && String(bruta).trim()) || null };
+  }
+
   const formatoCantidad = (v) => (v === null || v === undefined || v === '') ? '—' : Number(v).toLocaleString('es-CO', { maximumFractionDigits: 4 });
 
   // Vista de DETALLE
@@ -4447,41 +4466,72 @@
           </select></td>
           <td><select class="mini" data-f="componente" style="min-width:200px;">${htmlOpciones(opcionesDe(tipoInicial, compIdInicial || null), compIdInicial)}</select></td>
           <td><input type="number" step="any" class="mini" data-f="cantidad" style="width:110px;" value="${escAttr(comp && comp.cantidad !== null ? String(comp.cantidad) : '')}"></td>
-          <td><input type="text" class="mini" data-f="unidad" style="width:100px;" value="${escAttr(comp ? (comp.unidad || '') : '')}"></td>
+          <td data-f="unidad-texto"></td>
           <td style="white-space:nowrap;">${comp
             ? '<button class="link" type="button" data-guardar>Guardar</button> &nbsp;·&nbsp; <button class="link" type="button" data-quitar>Quitar</button>'
             : '<button class="ghost" type="button" data-agregar>+ Agregar componente</button>'}</td>`;
 
         const selTipo = tr.querySelector('[data-f="tipo"]');
         const selComp = tr.querySelector('[data-f="componente"]');
-        selTipo.addEventListener('change', () => { selComp.innerHTML = htmlOpciones(opcionesDe(selTipo.value, null), ''); });
+        const celdaUnidad = tr.querySelector('[data-f="unidad-texto"]');
 
-        const leerPayload = () => {
+        // La unidad no se escribe: siempre es la del componente elegido (unidad_estandar del ingrediente
+        // o rendimiento_unidad de la sub-receta). Aquí se muestra con los datos ya cargados; al guardar
+        // se vuelve a consultar en la base (consultarUnidadHeredada).
+        const pintarUnidad = () => {
+          if (selComp.value === '') { celdaUnidad.innerHTML = '<span class="celda-sin-valor">—</span>'; return; }
+          const unidad = unidadHeredadaCargada(selTipo.value, selComp.value);
+          if (!unidad) {
+            celdaUnidad.innerHTML = '<span style="color:#8A5A12;" title="Define la unidad en el ingrediente o en la receta elegida">Sin unidad definida</span>';
+            return;
+          }
+          const mismoComponente = selTipo.value === tipoInicial && String(selComp.value) === String(compIdInicial);
+          const aviso = comp && mismoComponente && comp.unidad && comp.unidad !== unidad
+            ? ` <span style="color:#8A5A12; font-size:11px;">(guardada: ${esc(comp.unidad)}; pulsa Guardar para actualizarla)</span>`
+            : '';
+          celdaUnidad.innerHTML = `${esc(unidad)}${aviso}`;
+        };
+        pintarUnidad();
+        selTipo.addEventListener('change', () => { selComp.innerHTML = htmlOpciones(opcionesDe(selTipo.value, null), ''); pintarUnidad(); });
+        selComp.addEventListener('change', pintarUnidad);
+
+        const leerPayload = async () => {
           const compId = selComp.value;
           const cantidadTxt = tr.querySelector('[data-f="cantidad"]').value;
           if (compId === '') { toast('Elige el ingrediente o la sub-receta', true); return null; }
           const cantidad = Number(cantidadTxt);
           if (cantidadTxt === '' || Number.isNaN(cantidad) || cantidad <= 0) { toast('La cantidad debe ser un número mayor que 0', true); return null; }
           const esReceta = selTipo.value === 'receta';
+          const { unidad, error } = await consultarUnidadHeredada(selTipo.value, Number(compId));
+          if (error) { toast('No se pudo consultar la unidad del componente: ' + error.message, true); return null; }
           return {
             receta_id: r.id,
             tipo_componente: selTipo.value,
             ingrediente_id: esReceta ? null : Number(compId),
             subreceta_id: esReceta ? Number(compId) : null,
             cantidad,
-            unidad: tr.querySelector('[data-f="unidad"]').value.trim() || null
+            unidad
           };
         };
+        const mensajeGuardado = (payload, base) => payload.unidad
+          ? base
+          : `${base}, pero sin unidad: defínela en el ${payload.tipo_componente === 'receta' ? 'rendimiento de esa receta' : 'ingrediente'}`;
         const refrescar = async () => { await pintarComponentes(); pintarDesglose(); };
 
         if (comp) {
-          tr.querySelector('[data-guardar]').addEventListener('click', async () => {
-            const payload = leerPayload();
-            if (!payload) return;
-            const { data, error } = await sb.from('receta_componentes').update(payload).eq('id', comp.id).select('id');
-            if (!escrituraAplicada(data, error, 'Error: ')) return;
-            toast('Componente actualizado');
-            refrescar();
+          tr.querySelector('[data-guardar]').addEventListener('click', async (e) => {
+            const boton = e.currentTarget;
+            boton.disabled = true;
+            try {
+              const payload = await leerPayload();
+              if (!payload) return;
+              const { data, error } = await sb.from('receta_componentes').update(payload).eq('id', comp.id).select('id');
+              if (!escrituraAplicada(data, error, 'Error: ')) return;
+              toast(mensajeGuardado(payload, 'Componente actualizado'), !payload.unidad);
+              refrescar();
+            } finally {
+              boton.disabled = false;
+            }
           });
           tr.querySelector('[data-quitar]').addEventListener('click', async () => {
             const { data, error } = await sb.from('receta_componentes').delete().eq('id', comp.id).select('id');
@@ -4490,13 +4540,19 @@
             refrescar();
           });
         } else {
-          tr.querySelector('[data-agregar]').addEventListener('click', async () => {
-            const payload = leerPayload();
-            if (!payload) return;
-            const { data, error } = await sb.from('receta_componentes').insert(payload).select('id');
-            if (!escrituraAplicada(data, error, 'Error: ')) return;
-            toast('Componente agregado');
-            refrescar();
+          tr.querySelector('[data-agregar]').addEventListener('click', async (e) => {
+            const boton = e.currentTarget;
+            boton.disabled = true;
+            try {
+              const payload = await leerPayload();
+              if (!payload) return;
+              const { data, error } = await sb.from('receta_componentes').insert(payload).select('id');
+              if (!escrituraAplicada(data, error, 'Error: ')) return;
+              toast(mensajeGuardado(payload, 'Componente agregado'), !payload.unidad);
+              refrescar();
+            } finally {
+              boton.disabled = false;
+            }
           });
         }
         return tr;
