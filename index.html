@@ -3846,6 +3846,7 @@
     const impuestos = document.getElementById('edf-impuestos-' + id).value;
     const formaPago = document.getElementById('edf-forma-pago-' + id).value.trim();
     const tipoGasto = document.getElementById('edf-tipo-gasto-' + id).value;
+    const tipoGastoLoggroId = loggroIdDeTipoGasto(tipoGasto, FACTURAS.find(x => x.id === id));
     const notas = document.getElementById('edf-notas-' + id).value.trim();
 
     const { error } = await sb.from('pizzamos_facturas').update({
@@ -3859,11 +3860,23 @@
       impuestos: impuestos === '' ? null : Number(impuestos),
       forma_pago: formaPago || null,
       tipo_gasto_nombre: tipoGasto || null,
+      tipo_gasto_loggro_id: tipoGastoLoggroId,
       notas: notas || null
     }).eq('id', id);
     if (error) { toast('Error: ' + error.message, true); return; }
     toast('Factura actualizada');
     cargarFacturas();
+  }
+
+  // El tipo de gasto se guarda siempre como pareja (nombre + loggro_id) para que nunca queden desalineados:
+  // sin selección → ambos null; nombre de la lista (pizzamos_tipos_gasto) → su loggro_id.
+  // Un nombre que ya no está en la lista activa (ej. un tipo desactivado después) conserva el loggro_id que ya
+  // tenía la factura mientras no se cambie el nombre; si el nombre cambia a algo que no se reconoce, queda null.
+  function loggroIdDeTipoGasto(nombre, factura) {
+    if (!nombre) return null;
+    const tipo = TIPOS_GASTO.find(t => t.nombre === nombre);
+    if (tipo) return tipo.loggro_id != null ? String(tipo.loggro_id) : null;
+    return factura && factura.tipo_gasto_nombre === nombre ? (factura.tipo_gasto_loggro_id ?? null) : null;
   }
 
   async function actualizarEstadoFactura(id, estado) {
